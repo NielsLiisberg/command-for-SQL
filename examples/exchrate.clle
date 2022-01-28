@@ -1,0 +1,11 @@
+PGM
+    DCL        VAR(&rate) TYPE(*DEC) LEN(15 5)
+    DCL        VAR(&rate_) TYPE(*DEC) LEN(15)
+    
+    /* Do the magic - Call the webservice */ 
+    CMD4SQL/EXCHRATE CURRENCY_C(USD) RTNVAR1(&RATE)
+
+    CHGVAR &RATE_ &RATE 
+    SNDPGMMSG MSG('Rate for USD is' *bcat rate_) 
+
+ENDPGM

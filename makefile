@@ -19,27 +19,34 @@ CCFLAGS=OPTIMIZE(10) ENUM(*INT) TERASPACE(*YES) STGMDL(*INHERIT) SYSIFCOPT(*IFSI
 
 # For current compile:
 CCFLAGS2=OPTION(*STDLOGMSG) OUTPUT(*none) $(CCFLAGS)
+DB2=/QSYS.LIB/QZDFMDB2.PGM
 
 #
 # User-defined part end
 #-----------------------------------------------------------
 
 # Dependency list
+.ONESHELL:
 
-all:  $(BIN_LIB).lib cmd4sql.pgm  hdr
+all:  $(BIN_LIB).lib create_CL_command.sql cmd4sql.pgm 
 
 cmd4sql.pgm: sndpgmmsg.c sqlcmdexc.c 
 
 #-----------------------------------------------------------
 
 %.lib:
-	-system -q "CRTLIB $* TYPE(*TEST) TEXT('CMD4SQL: Command for SQL functions and procedures')"                                          
-"
-
+	-system -q "CRTLIB $* TYPE(*TEST) TEXT('CMD4SQL: Command for SQL functions and procedures')" 
+	
 
 %.entry:
 	# Basically do nothing..
 	@echo "Adding binding entry $*"
+
+%.sql:
+	system "RUNSQLSTM SRCSTMF('sql/$*.sql') COMMIT(*NONE)  "
+
+    
+#	$(DB2) ../sql/$*.sql
 
 %.c:
 	system -q "CHGATR OBJ('src/$*.c') ATR(*CCSID) VALUE(1252)"
@@ -56,7 +63,7 @@ cmd4sql.pgm: sndpgmmsg.c sqlcmdexc.c
 	# You may be wondering what this ugly string is. It's a list of objects created from the dep list that end with .c or .clle.
 	$(eval modules := $(patsubst %,$(BIN_LIB)/%,$(basename $(filter %.c %.clle,$(notdir $^)))))
 	
-	system -q -kpieb "CRTPGM PGM($(BIN_LIB)/$*) MODULE($(modules)) SRCFILE($(BIN_LIB)/QSRVSRC) ACTGRP(QILE) TGTRLS($(TARGET_RLS))"
+	system -q -kpieb "CRTPGM PGM($(BIN_LIB)/$*) MODULE($(modules)) ACTGRP(QILE) TGTRLS($(TARGET_RLS))"
 
 
 
@@ -91,11 +98,21 @@ release: clean
 # For vsCode / single file then i.e.: gmake current sqlio.c  
 current: 
 	system -i "CRTCMOD MODULE($(BIN_LIB)/$(SRC)) SRCSTMF('src/$(SRC).c') $(CCFLAGS2) "
-	system -i "UPDPGM PGM($(BIN_LIB)/JSONXML) MODULE($(BIN_LIB)/*ALL)"  
+	system -i "UPDPGM PGM($(BIN_LIB)/cmd4sql) MODULE($(BIN_LIB)/*ALL)"  
 
 # For vsCode / single file then i.e.: gmake current sqlio.c  
 example: 
 	system -i "CRTBNDRPG PGM($(BIN_LIB)/$(SRC)) SRCSTMF('examples/$(SRC).rpgle') DBGVIEW(*ALL)" > error.txt
 
+compile: 
+	system -q "CHGATR OBJ('examples/$(SRC)') ATR(*CCSID) VALUE(1252)"
+	-system -q "CRTSRCPF FILE($(BIN_LIB)/QCLLESRC) RCDLEN(132)"
+	system "CPYFRMSTMF FROMSTMF('examples/$(SRC)') TOMBR('/QSYS.lib/$(BIN_LIB).lib/QCLLESRC.file/$(OBJ).mbr') MBROPT(*REPLACE)"
+	system -i "CRTBNDCL PGM($(BIN_LIB)/$(OBJ)) SRCFILE($(BIN_LIB)/QCLLESRC) DBGVIEW($(DBGVIEW)) TGTRLS($(TARGET_RLS))" > error.txt
+
 test: 
+
 	system -i "CRTBNDRPG PGM($(BIN_LIB)/$(SRC)) SRCSTMF('test/$(SRC).rpgle') DBGVIEW(*ALL)" > error.txt
+
+       
+.PHONY: compile
