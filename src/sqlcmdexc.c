@@ -18,37 +18,13 @@
 #include <ctype.h>
 #include "sqlcli.h"
 #include "ostypes.h"
+#include "sndpgmmsg.h"
+#include "sqlcmdexc.h"
+
 
 SQLHENV       henv = -1;
 SQLHDBC       hdbc = 0;
 SQLHSTMT      hstmt = 0 ;
-
-typedef struct _PARMS {
-   SQLSMALLINT parmNo;
-   UCHAR name[32] ;
-   SQLSMALLINT cltype;
-   SQLSMALLINT sqltype;
-   SQLINTEGER  len;
-   SQLSMALLINT dec;
-   SQLSMALLINT usage;
-   UCHAR  attr;
-   SQLPOINTER data;
-   SQLINTEGER bufLenIn;
-   SQLINTEGER bufLenOut;
-} PARMS , *PPARMS;
-
-// -------------------------------------------------------------
-// TODO Put prototypes in H file
-// -------------------------------------------------------------
-SQLRETURN cleanUp(int rc);
-void checkError (
-   SQLHENV    henv,
-   SQLHDBC    hdbc,
-   SQLHSTMT   hstmt,
-   SQLRETURN  rc
-);
-void buildSQLstatement (int argc, char ** argv, PUCHAR sqlStmt , int parmNum, PPARMS pParms);
-SQLRETURN run (int argc, char ** argv, PUCHAR sqlStmt, int parmNum, PPARMS pParms);
 
 // -------------------------------------------------------------
 PUCHAR  slurp  (PUCHAR out  , PUCHAR * buf)                  {
@@ -130,7 +106,7 @@ int main(int argc, char ** argv) {
    rc = run(argc, argv , sqlStmt , parmNum , parms);
 
    if (rc != SQL_SUCCESS ) {
-      // TODO Send Escape
+      sndpgmmsg ( "CPF9898", QCPFMSG , ESCAPE , 3,  "CMD4SQL Failed: %s. See previous messages", argv[0]);
    }
 }
 
@@ -301,7 +277,7 @@ SQLRETURN cleanUp(orgrc)
 
 }
 // -------------------------------------------------------------
-// TODO !! Put into joblog with and finally send ESCAPE// for now just print
+// Put into joblog with and finally send ESCAPE// for now just print
 // -------------------------------------------------------------
 void checkError (
    SQLHENV    henv,
@@ -313,59 +289,10 @@ void checkError (
    SQLCHAR     sqlstate[SQL_SQLSTATE_SIZE + 1];
    SQLINTEGER  sqlcode;
    SQLSMALLINT length;
-   while ( SQLError(henv, hdbc, hstmt, sqlstate, &sqlcode, buffer,
-                     SQL_MAX_MESSAGE_LENGTH + 1, &length) == SQL_SUCCESS ){
-      printf("\n **** ERROR *****\n");
-      printf("         SQLSTATE: %s\n", sqlstate);
-      printf("Native Error Code: %ld\n", sqlcode);
-      printf("%s \n", buffer);
+   while (SQL_SUCCESS == SQLError(henv, hdbc, hstmt, sqlstate, &sqlcode, buffer,
+                     SQL_MAX_MESSAGE_LENGTH + 1, &length)  ){
+      sndpgmmsg ( "CPF9898", QCPFMSG, INFO, 1,  "%s. sqlstate: %s, sqlcode: %ld" , 
+         buffer , sqlstate, sqlcode 
+      );
    };
 }
-// -------------------------------------------------------------
-/* TODO !! process the command:
-
-// TODO Convert this to clean C-code:
-
-**free
-               dcl-ds CMDD0100data ;
-                 BytesReturned int(10) ;
-                 ByteAvailable int(10) ;
-                 XMLdata char(10240) ccsid(1208) ;
-               end-ds ;
-
-               dcl-pr QCDRCMDD extpgm ;
-                 *n char(20) const ;                   //Command & library
-                 *n int(10) const;                     // size
-                 *n char(8) const ;                    //Destination format name
-                 *n char(32767) options(*varsize) ;    //Returned DS
-                 *n char(8) const ;                    //Receiver format name
-                 *n int(20) const;                     //API error DS
-               end-pr ;
-
-               /include qsysinc/qrpglesrc,qusec        //API error DS
-               ByteAvailable = %size(xmldata);
-
-               XMLdata = ' ' ;
-
-               QCDRCMDD('CMDJOBLOG *LIBL     ':
-                        %size(xmldata):
-                        'DEST0100' :
-                        CMDD0100data :
-                        'CMDD0100' :
-                        0    ) ;
-
-
-               return ;
-               *INLR= *ON;
-
-// Returns XML like this
-
-<QcdCLCmd DTDVersion="1.0">
-        <Cmd CmdName="CMDJOBLOG" CmdLib="__LIBL" CCSID="277" MaxPos="99" Prompt="Call SQL procedure joblog" MsgF="QCPFMS
-                <Parm Kwd="MESSAGE" PosNbr="1" KeyParm="NO" Type="CHAR" Min="0" Max="1" Prompt="Message" Len="256" Rstd=
-                </Parm>
-        </Cmd>
-</QcdCLCmd>
-
-
-*/

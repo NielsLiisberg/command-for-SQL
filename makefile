@@ -10,7 +10,7 @@
 BIN_LIB=CMD4SQL
 DBGVIEW=*ALL
 TARGET_CCSID=500
-TARGET_RLS=V7R2M0
+TARGET_RLS=V7R3M0
 
 # Do not touch below
 INCLUDE='/QIBM/include' 'headers/' 'headers/ext/' 
@@ -43,7 +43,7 @@ cmd4sql.pgm: sndpgmmsg.c sqlcmdexc.c
 	@echo "Adding binding entry $*"
 
 %.sql:
-	system "RUNSQLSTM SRCSTMF('sql/$*.sql') COMMIT(*NONE)  "
+	-system "RUNSQLSTM SRCSTMF('sql/$*.sql') COMMIT(*NONE)  "
 
     
 #	$(DB2) ../sql/$*.sql

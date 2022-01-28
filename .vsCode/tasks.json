@@ -5,7 +5,7 @@
     "tasks": [
         {
             "label": "Compile current file",
-            "command": "ssh -t dksrv206 'PATH=/QOpenSys/pkgs/bin:$PATH;cd /prj/command-for-SQL/;gmake current SRC=${fileBasenameNoExtension}'",
+            "command": "ssh -t mensa 'PATH=/QOpenSys/pkgs/bin:$PATH;cd /prj/command-for-SQL/;gmake current SRC=${fileBasenameNoExtension}'",
             "type": "shell",
             "group": {
                 "kind": "build",
@@ -28,7 +28,7 @@
         },
         {
             "label": "Compile program CMD4SQL",
-            "command": "ssh dksrv206 'PATH=/QOpenSys/pkgs/bin:$PATH;cd /prj/command-for-SQL/;gmake all'",
+            "command": "ssh mensa 'PATH=/QOpenSys/pkgs/bin:$PATH;cd /prj/command-for-SQL/;gmake all'",
             "type": "shell",
             "group": {
                 "kind": "build",
@@ -40,7 +40,7 @@
         },
         {
             "label": "Compile Test modules for CMD4SQL",
-            "command": "ssh dksrv206 'PATH=/QOpenSys/pkgs/bin:$PATH;cd /prj/command-for-SQL/test/;gmake'",
+            "command": "ssh mensa 'PATH=/QOpenSys/pkgs/bin:$PATH;cd /prj/command-for-SQL/test/;gmake'",
             "type": "shell",
             "group": {
                 "kind": "build",
@@ -52,7 +52,7 @@
         },
         {
             "label": "Compile current example file",
-            "command": "ssh -t dksrv206 'PATH=/QOpenSys/pkgs/bin:$PATH;cd /prj/command-for-SQL/;gmake compile SRC=${fileBasename} OBJ=${fileBasenameNoExtension}'",
+            "command": "ssh -t mensa 'PATH=/QOpenSys/pkgs/bin:$PATH;cd /prj/command-for-SQL/;gmake compile SRC=${fileBasename} OBJ=${fileBasenameNoExtension}'",
             "type": "shell",
             "group": {
                 "kind": "build",
@@ -62,7 +62,7 @@
         },
         {
             "label": "Compile current test file",
-            "command": "ssh -t dksrv206 'PATH=/QOpenSys/pkgs/bin:$PATH;cd /prj/command-for-SQL/test/;gmake compile SRC=${fileBasename} OBJ=${fileBasenameNoExtension}'",
+            "command": "ssh -t mensa 'PATH=/QOpenSys/pkgs/bin:$PATH;cd /prj/command-for-SQL/test/;gmake compile SRC=${fileBasename} OBJ=${fileBasenameNoExtension}'",
             "type": "shell",
             "group": {
                 "kind": "build",
@@ -72,7 +72,7 @@
         },
         {
             "label": "Make release savefile",
-            "command": "ssh dksrv206 'PATH=/QOpenSys/pkgs/bin:$PATH;cd /prj/command-for-SQL/;gmake release'",
+            "command": "ssh mensa 'PATH=/QOpenSys/pkgs/bin:$PATH;cd /prj/command-for-SQL/;gmake release'",
             "type": "shell",
             "group": {
                 "kind": "build",

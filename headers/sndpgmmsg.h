@@ -7,6 +7,6 @@
 #define UTLMSG  "UTLMSG    *LIBL     "
 #define USRMSG  "USRMSG    *LIBL     "
 #define QCPFMSG "QCPFMSG   *LIBL     "
-void sndpgmmsg(PUCHAR Msgid,PUCHAR Msgf,PUCHAR Type, PUCHAR Msgdta, ...);
-void il_joblog (PUCHAR text, ...);
+void sndpgmmsg(PUCHAR Msgid,PUCHAR Msgf,PUCHAR Type, LONG stack, PUCHAR Msgdta, ...);
+void joblog (PUCHAR text, ...);
 #endif
