@@ -1,0 +1,57 @@
+CPD000D: Command *LIBL/CRTBNDCL not safe for a multithreaded job.
+CPC0815: Program ALL_TYPES created in library CMD4SQL.
+ 5770SS1 V7R3M0  160422                  Control Language         CMD4SQL/ALL_TYPES     MENSA 28.01.22 16:17:13         Page    1
+ Program . . . . . . . . . . . . . . . . . . . :   ALL_TYPES
+   Library . . . . . . . . . . . . . . . . . . :     CMD4SQL
+ Source file . . . . . . . . . . . . . . . . . :   QCLLESRC
+   Library . . . . . . . . . . . . . . . . . . :     CMD4SQL
+ Source member name  . . . . . . . . . . . . . :   ALL_TYPES   28.01.22 16:17:13
+ Source printing options . . . . . . . . . . . :   *XREF  *NOSECLVL  *NOEVENTF  *NODOSLTLVL
+ User profile  . . . . . . . . . . . . . . . . :   *USER
+ Program logging . . . . . . . . . . . . . . . :   *JOB
+ Allow RTVCLSRC command  . . . . . . . . . . . :   *YES
+ Default activation group  . . . . . . . . . . :   *YES
+ Activation group  . . . . . . . . . . . . . . :
+ Replace program . . . . . . . . . . . . . . . :   *YES
+ Target release  . . . . . . . . . . . . . . . :   V7R3M0
+ Authority . . . . . . . . . . . . . . . . . . :   *LIBCRTAUT
+ Sort sequence . . . . . . . . . . . . . . . . :   *HEX
+ Language identifier . . . . . . . . . . . . . :   *JOBRUN
+ Text  . . . . . . . . . . . . . . . . . . . . :
+ Optimization  . . . . . . . . . . . . . . . . :   *NONE
+ Debugging view  . . . . . . . . . . . . . . . :   *ALL
+ Debug encryption key  . . . . . . . . . . . . :   *NONE
+ Enable performance collection . . . . . . . . :   *PEP
+ Storage model . . . . . . . . . . . . . . . . :   *SNGLVL
+ Compiler  . . . . . . . . . . . . . . . . . . :   IBM Control Language Compiler
+                                      Control Language Source
+ SEQNBR  *...+... 1 ...+... 2 ...+... 3 ...+... 4 ...+... 5 ...+... 6 ...+... 7 ...+... 8 ...+... 9 ...+.  DATE
+    100- PGM
+    200-     DCL        VAR(&rate) TYPE(*DEC) LEN(15 5)
+    300-     DCL        VAR(&rate_) TYPE(*char) LEN(15)
+    400-
+    500-     /* Do the magic - Call the webservice */
+    600-     CMD4SQL/EXCHRATE CURRENCY_C(USD) RTNVAR1(&RATE)
+    700-
+    800-     CHGVAR &RATE_ &RATE
+    900-     SNDPGMMSG MSG('Rate for USD is' *bcat &rate_)
+   1000-
+   1100- ENDPGM
+                               * * * * *   E N D   O F   S O U R C E   * * * * *
+ 5770SS1 V7R3M0  160422                  Control Language         CMD4SQL/ALL_TYPES     MENSA 28.01.22 16:17:13         Page    2
+                                          Cross Reference
+ Declared Variables
+ Name                        Defined     Type            Length      References
+ &RATE                          200      *DEC               15 5         600    800
+ &RATE_                         300      *CHAR              15           800    900
+* CPD0791 00  No labels used in program.
+                     * * * * *   E N D   O F   C R O S S   R E F E R E N C E   * * * * *
+ 5770SS1 V7R3M0  160422                  Control Language         CMD4SQL/ALL_TYPES     MENSA 28.01.22 16:17:13         Page    3
+                                          Message Summary
+               Severity
+ Total         0-9  10-19  20-29  30-39  40-49  50-59  60-69  70-79  80-89  90-99
+      1          1      0      0      0      0      0      0      0      0      0
+ Program ALL_TYPES created in library CMD4SQL on 28.01.22 at 16:17:13.
+ Program ALL_TYPES created in library CMD4SQL. Maximum error severity 00.
+                               * * * * *   E N D   O F   M E S S A G E   S U M M A R Y   * * * * *
+                                 * * * * *   E N D   O F   C O M P I L A T I O N   * * * * *

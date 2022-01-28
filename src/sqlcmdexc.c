@@ -64,7 +64,8 @@ int  parseMeta  (int argc, char ** argv, PUCHAR sqlStmt, PPARMS pParms )
       pParm->data = pValue +1;
 
       // Return values always pase the len in commands
-      if (pParm->usage == SQL_PARAM_OUTPUT) {
+      if (pParm->usage == SQL_PARAM_OUTPUT
+      || pParm->usage  == SQL_PARAM_INPUT_OUTPUT) {
          // All data not having "VARRYING" - we insert space
          if (pParm->sqltype != SQL_VARCHAR
          &&  pParm->sqltype != SQL_WVARCHAR
@@ -119,7 +120,6 @@ void buildSQLstatement (int argc, char ** argv, PUCHAR sqlStmt , int parmNum , P
    UCHAR  schemaName  [32];
    UCHAR  routineName [32];
    PUCHAR pSqlStmt = sqlStmt; // To traverse it
-   BOOL isFunction;
    PUCHAR comma;
 
 
@@ -128,44 +128,58 @@ void buildSQLstatement (int argc, char ** argv, PUCHAR sqlStmt , int parmNum , P
    slurp (schemaName      ,  &pMeta );
    slurp (routineName     ,  &pMeta );
 
-   isFunction = *routineType = 'F';
-
-   if (isFunction) {
-      pSqlStmt += sprintf (pSqlStmt,"values  %s.%s (",
-         schemaName,
-         routineName
-      );
-   } else {
-      pSqlStmt += sprintf (pSqlStmt, "call %s.%s (",
-         schemaName,
-         routineName
-      );
-   }
-
-   comma = "";
-   for (i=0 ; i < parmNum ;  i++) {
-      PPARMS pParm = &pParms [i];
-      if (pParm->usage == SQL_PARAM_INPUT ) {
-         pSqlStmt += sprintf (pSqlStmt ,"%s%s => ?" ,
-            comma , pParm->name
+   switch (*routineType) {
+      
+      // UDTF - Function 
+      case 'F': {
+         pSqlStmt += sprintf (pSqlStmt,"values  %s.%s (",
+            schemaName,
+            routineName
          );
-         comma = ",";
-      }
-   }
 
-   if (isFunction) {
-      comma = "";
-      pSqlStmt += sprintf (pSqlStmt, ") into ");
-      for (i=0 ; i < parmNum ;  i++) {
-         PPARMS pParm = &pParms [i];
-         if (pParm->usage == SQL_PARAM_OUTPUT ) {
-            pSqlStmt += sprintf (pSqlStmt,"%s?", comma);
+         comma = "";
+         for (i=0 ; i < parmNum ;  i++) {
+            PPARMS pParm = &pParms [i];
+            if (pParm->usage == SQL_PARAM_INPUT ) {
+               pSqlStmt += sprintf (pSqlStmt ,"%s%s => ?" ,
+                  comma , pParm->name
+               );
+               comma = ",";
+            }
+         }
+
+         comma = "";
+         pSqlStmt += sprintf (pSqlStmt, ") into ");
+         for (i=0 ; i < parmNum ;  i++) {
+            PPARMS pParm = &pParms [i];
+            if (pParm->usage == SQL_PARAM_OUTPUT ) {
+               pSqlStmt += sprintf (pSqlStmt,"%s?", comma);
+               comma = ",";
+            }
+         }
+         break;
+      }
+
+      // Procedures 
+      case 'P': {
+         pSqlStmt += sprintf (pSqlStmt, "call %s.%s (",
+            schemaName,
+            routineName
+         );
+
+         comma = "";
+         for (i=0 ; i < parmNum ;  i++) {
+            PPARMS pParm = &pParms [i];
+            pSqlStmt += sprintf (pSqlStmt ,"%s%s => ?" ,
+               comma , pParm->name
+            );
             comma = ",";
          }
+         pSqlStmt += sprintf (pSqlStmt ,")");
+         break;
       }
-   } else {
-      pSqlStmt += sprintf (pSqlStmt ,")");
-   }
+
+   } 
 
 }
 // -------------------------------------------------------------

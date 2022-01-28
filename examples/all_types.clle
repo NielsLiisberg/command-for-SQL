@@ -1,0 +1,19 @@
+PGM                                                                  
+             DCL        VAR(&A) TYPE(*DEC) LEN(5 2) VALUE(1.23)      
+             DCL        VAR(&B) TYPE(*DEC) LEN(5 2) VALUE(2.34)      
+             DCL        VAR(&C) TYPE(*DEC) LEN(5 2) VALUE(5.67)      
+             DCL        VAR(&TEXT) TYPE(*CHAR) LEN(6)                
+                                                                     
+             /* Do the magic - Call the procedure add */                
+             CMD4SQL/ADD A(&A) B(&B) C(&C)                           
+                                                                     
+             CHGVAR     VAR(&TEXT) VALUE(&C)                         
+             SNDPGMMSG  MSG('Sum ' *BCAT &TEXT)                      
+                                                                     
+             /* Do the magic - Call the procedure inc */                
+             CMD4SQL/INC A(&A)                                       
+                                                                     
+             CHGVAR     VAR(&TEXT) VALUE(&A)                         
+             SNDPGMMSG  MSG('Inc' *BCAT &TEXT)                       
+                                                                     
+ENDPGM                                                               

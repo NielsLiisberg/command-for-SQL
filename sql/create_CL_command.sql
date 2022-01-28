@@ -131,7 +131,7 @@ begin
                             set parm_options = parm_options concat  ' MIN(1) ';
                         end if;
 
-                    when 'OUT' then 
+                    when 'OUT' or 'INOUT' then 
                         set allow_mode = '*BPGM *IPGM';
                         set parm_options = parm_options concat ' RTNVAL(*YES) ';
                         -- return values must always have varying
@@ -143,8 +143,8 @@ begin
                             set parameter_name = 'RTNVAR' concat out_parm_counter;
                         end if; 
 
-                    when 'INOUT' then 
-                        signal  sqlstate 'NLI02' set message_text  = 'INOUT parameters is not suported';
+                    --when 'INOUT' then 
+                    --    signal  sqlstate 'NLI02' set message_text  = 'INOUT parameters is not suported';
                 end case; 
                 
                 -- Still null ( IBM i build-in )                        
