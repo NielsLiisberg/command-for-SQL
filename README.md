@@ -1,6 +1,5 @@
-# command-for-SQL
+# command-for-SQL on IBM i 
 CL Commands for SQL procedures and functions
-
 
 If you as I, are taking stored procedures and user defined table function (UDTF) 
 seriously, then this project is aimed for you. You have probably noticed 
@@ -193,9 +192,14 @@ each parameter with a give parameter marker - and finally call you
 procedure of function with a **SQLexecute** .. simple as that.
 
 ## Installation
+
 This project also contains a "release" folder where you will find a savefile. So 
 simply transfer that your IFS and restore the library CMD4SQL, and you are up 
 and running. 
+
+## Build from scratch
+Please also be involved, and let's make this project better together:
+Clone this project into **/prj** on your IFS on your **IBM i** and run a **gmake** and it will compile and build everything 
 
 ## Final thoughts
 What if your procedure was returning a open cursor? or what if you are 
