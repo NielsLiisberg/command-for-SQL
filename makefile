@@ -10,7 +10,7 @@
 BIN_LIB=CMD4SQL
 DBGVIEW=*ALL
 TARGET_CCSID=500
-TARGET_RLS=V7R3M0
+TARGET_RLS=V7R2M0
 
 # Do not touch below
 INCLUDE='/QIBM/include' 'headers/' 'headers/ext/' 
