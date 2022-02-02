@@ -155,7 +155,7 @@ is the command it self.
 ## Catching the errors
 If you try to modify you code so you by purpose divide by zero - then what 
 happens? Well - the SQL traps the error and it will bubble up to your CL where you can 
-use the standard MONMSG and detect the error and handle it gracefully ans you 
+use the standard MONMSG and detect the error and handle it gracefully as you 
 normally would. 
 
 ## The interface
@@ -190,14 +190,14 @@ program CMD4SQL in library CMD4SQL - that effectively means you don't
 the CMD4SQL in your library list when using the created commands. 
 
 If a given parameter in SQL has a default value, then it
-is set top be an *optional* in the command. The later CMD4SQL program  
+is set to be an *optional* in the command. The later CMD4SQL program  
 figures out at runtime if the parameter is given or not and
 let SQL deal with the default value. So no defaults is the command it self.
 
 Also notice that; if you have any OUT or INOUT or calling a scalar 
 function, then it will compile the command to allow it to run 
 only on *IPGM and *BPGM since CL has no idea how to return 
-values is started from i.e. the command line.
+values if it is started from i.e. the command line.
 
 ### the CMD4SQL program
 I have used SQLCLI for this task. SQLCLI - *callable interface* 
