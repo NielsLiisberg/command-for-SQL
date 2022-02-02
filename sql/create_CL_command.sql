@@ -123,15 +123,14 @@ begin
                 end if; 
                 
               
-                case parameter_mode  
-
-                    when 'IN' then 
+                case
+                    when parameter_mode  = 'IN' then 
                         set parm_options = parm_options concat  ' EXPR(*YES) ';
                         if  c.default is null then 
                             set parm_options = parm_options concat  ' MIN(1) ';
                         end if;
 
-                    when 'OUT' or 'INOUT' then 
+                    when parameter_mode  in ('OUT' ,'INOUT') then 
                         set allow_mode = '*BPGM *IPGM';
                         set parm_options = parm_options concat ' RTNVAL(*YES) ';
                         -- return values must always have varying
