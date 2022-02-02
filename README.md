@@ -23,9 +23,9 @@ procedures and functions to bridge the gap between CL and SQL.
 
 ## What it does
 
-After you create a procedure or a function or your own, 
+After you create a procedure or a function of your own, 
 then you can run the **CREATE_CL_COMMAND** procedure 
-with in this project, and it will produce a CL command that enables 
+within this project, and it will produce a CL command that enables 
 you to integrate the SQL functionality directly into a CL 
 program or even place that command in a SBMJOB or perhaps 
 run it directly from a command line. 
@@ -43,9 +43,10 @@ and let it be handled by at generic program that finally
 executes your SQL procedure or function. Easy as that.
 
 ## Into action
-Let’s play with an example ( it assumes you have done the installation) 
+Let’s play with an example ( it assumes you have done the installation described later) 
 
 Fire up your ACS and open "Run SQL scripts" and past the following ( or open the divide.sql from the examples):
+
 
 ```
 -- A simple divide procedure:
@@ -83,8 +84,8 @@ select * from qtemp.xxtempsrc;
 cl:CMD4SQL/DIVIDE dividend(123) DIVISOR(10) RES(0);
 
 --------------------------------------------------------------------------
--- Functions is also supported 
-------------------------------
+-- Functions are also supported 
+-------------------------------
 create or replace function cmd4sql.divide (
     dividend  dec(5, 2),
     divisor dec(5, 2)  
@@ -119,27 +120,25 @@ cl:CMD4SQL/DIVFUNC dividend(123) DIVISOR(10) RTNVAR1(0);
 ```
 
 ## The CL code using it
-Ensure that you have the CMD4SQL library on you library list - 
-( this is not required at runtime, only for this example).
 
-The open your CL editor of choice, create a new CLLE member DIVIDE and past and compile the following code into the source: 
+Open your CL editor of choice, create a new CLLE member DIVIDE and past and compile from the following code: 
 
 ```
 PGM                                                                  
     DCL        VAR(&DIVISOR)  TYPE(*DEC) LEN(5 2) VALUE(123)      
-    DCL        VAR(&dividend) TYPE(*DEC) LEN(5 2) VALUE(2.34)      
+    DCL        VAR(&DIVIDEND) TYPE(*DEC) LEN(5 2) VALUE(2.34)      
     DCL        VAR(&RESULT)   TYPE(*DEC) LEN(5 2) VALUE(0)      
     DCL        VAR(&TEXT) TYPE(*CHAR) LEN(6)                
                                                             
     /* Do the magic - Call the procedure "divide" */                
-    CMD4SQL/DIVIDE  DIVISOR(&DIVISOR) DIVIDEND(&dividend) RES(&RESULT)                           
+    CMD4SQL/DIVIDE  DIVISOR(&DIVISOR) DIVIDEND(&DIVIDEND) RES(&RESULT)                           
 
     /* Show the result */                                                        
     CHGVAR     VAR(&TEXT) VALUE(&RESULT)                         
     SNDPGMMSG  MSG('Divide by procedure: ' *BCAT &TEXT)                      
                                                             
     /* Do the magic - Call the function "divide" */                
-    CMD4SQL/DIVFUNC  DIVISOR(&DIVISOR) DIVIDEND(&dividend) RTNVAR1(&RESULT)                           
+    CMD4SQL/DIVFUNC  DIVISOR(&DIVISOR) DIVIDEND(&DIVIDEND) RTNVAR1(&RESULT)                           
                                                                      
     /* Show the result */                                                        
     CHGVAR     VAR(&TEXT) VALUE(&RESULT)                         
@@ -154,7 +153,8 @@ parameters and the only "thing" that carries the interface information
 is the command it self.
 
 ## Catching the errors
-If you try to modify you code so you by purpose divide by zero - then what happens? Well - the SQL traps the error and it will bubble up to your CL where you can 
+If you try to modify you code so you by purpose divide by zero - then what 
+happens? Well - the SQL traps the error and it will bubble up to your CL where you can 
 use the standard MONMSG and detect the error and handle it gracefully ans you 
 normally would. 
 
@@ -166,30 +166,50 @@ When you invoke **CREATE_CL_COMMAND** it will query the parameters for the given
 function or procedure you gives it. Now; CL and SQL does not share 
 the complete same data types, however a runtime table is set for mapping 
 the data types in your CL program and how they are declared in the function 
-or procedure.
+or procedure in SQL ( more precise in SQLCLI).
 
 Then **CREATE_CL_COMMAND** produces a temporary source where each parameter
 comes in pairs: 
 
-FIRST: a meta parameter - declaring a command constant ( that is not visible when prompting) containing the real name of the parameter in your SQL function or procedure, since CL has the limitation of 10 chars for parameter names. 
-The the CL data type and and SQL equivalent - Here we let SQL handle the
-conversion of data types under the hood, where it is possible, but some like ROW_ID is not supported (yet).
+FIRST: a meta parameter - declaring a command constant ( that is not visible when prompting) 
+containing the real name of the parameter in your SQL function or procedure, since 
+CL has the limitation of 10 chars for parameter names. 
+Then the CL data type and and SQLCLI equivalent - Here we let SQL handle the
+conversion of data types under the hood, where it is possible, 
+but some like ROW_ID is not supported (yet).
 
-SECOND: This is a normal parameter description for you will use in any 
-other command definition - not magic to that.
+SECOND: This is a normal parameter description as you will use it in any 
+other command definition, shown when prompting - not magic here.
 
-Also the kind and name of function or procedure are stored, so it know what to call.
+Also the kind and name of function or procedure are stored, so it 
+knows how and what to call.
 
-After producing the temporary command source is compiles it with a standard CRTCMD command and let it always run the program CMD4SQL in library CMD4SQL - that effectively means you don't the CMD4SQL in your library list when using the created commands. 
+After producing the temporary command source is compiles it 
+with a standard CRTCMD command. The produced command will always run the 
+program CMD4SQL in library CMD4SQL - that effectively means you don't 
+the CMD4SQL in your library list when using the created commands. 
 
-Also notice that; if you have any OUT or INOUT or calling a scalar function, then it will compile the command to allow it to run only on *IPGM and *BPGM since CL has no idea how to return values is started from i.e. the command line.
+If a given parameter in SQL has a default value, then it
+is set top be an *optional* in the command. The later CMD4SQL program  
+figures out at runtime if the parameter is given or not and
+let SQL deal with the default value. So no defaults is the command it self.
+
+Also notice that; if you have any OUT or INOUT or calling a scalar 
+function, then it will compile the command to allow it to run 
+only on *IPGM and *BPGM since CL has no idea how to return 
+values is started from i.e. the command line.
 
 ### the CMD4SQL program
-I have used SQLCLI for this task. SQLCLI - callable interface allows you to *bind* any parameter types as pointers, which makes it easy to simply *bind* to the parameter pointer that the command processor is handling you. 
+I have used SQLCLI for this task. SQLCLI - *callable interface* 
+allows you to *bind* any parameter types as pointers to a buffer, 
+which makes it easy to simply *bind* to the parameter pointer that the 
+command processor is handling you. 
 
-So the CMD4SQL will simply slurp up the meta information given by command processor . Then prepare either a *call* or a *values into* statement and the bind 
+So the CMD4SQL will simply slurp up the meta information 
+given by command processor . Then CMD4SQL wil prepare 
+either a *call* or a *values into* statement and then bind 
 each parameter with a give parameter marker - and finally call you 
-procedure of function with a **SQLexecute** .. simple as that.
+procedure of function with a **SQLexecute** ... simple as that.
 
 ## Installation
 
@@ -198,8 +218,9 @@ simply transfer that your IFS and restore the library CMD4SQL, and you are up
 and running. 
 
 ## Build from scratch
-Please also be involved, and let's make this project better together:
-Clone this project into **/prj** on your IFS on your **IBM i** and run a **gmake** and it will compile and build everything 
+Please also be involved, and let's make this project even better together:
+
+Clone this project into **/prj** on your IFS on your **IBM i** and run a **gmake all** and it will compile and build everything 
 
 ## Final thoughts
 What if your procedure was returning a open cursor? or what if you are 
