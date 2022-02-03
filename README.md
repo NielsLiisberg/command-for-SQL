@@ -225,7 +225,7 @@ Clone this project into **/prj** on your IFS on your **IBM i** and run a **gmake
 ## Final thoughts
 What if your procedure was returning a open cursor? or what if you are 
 using a UDTF that returns a table. Well I haven't figured that out yet - still room for improvements. Nevertheless, what I have solved so far is already extremely useful for simple integration between SQL and CL, and perhaps IBM will 
-take a look at this project and integrate it in releases to come. 
+take a look at this project and integrate it in IBM i releases to come. 
 
 This project is made available under the Apache license for this particular reason.
 
