@@ -22,16 +22,17 @@
 
 typedef struct _PARMS {
    SQLSMALLINT parmNo;
-   UCHAR name[32] ;
-   SQLSMALLINT cltype;
-   SQLSMALLINT sqltype;
+   UCHAR       name[32] ;
+   SQLSMALLINT clType;
+   SQLSMALLINT sqlType;
    SQLINTEGER  len;
    SQLSMALLINT dec;
+   BOOL        isVarying;
    SQLSMALLINT usage;
-   UCHAR  attr;
-   SQLPOINTER data;
-   SQLINTEGER bufLenIn;
-   SQLINTEGER bufLenOut;
+   UCHAR       attr;
+   SQLPOINTER  data;
+   SQLINTEGER  bufLenIn;
+   SQLINTEGER  bufLenOut;
 } PARMS , *PPARMS;
 
 // -------------------------------------------------------------

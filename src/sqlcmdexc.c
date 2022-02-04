@@ -27,71 +27,6 @@ SQLHDBC       hdbc = 0;
 SQLHSTMT      hstmt = 0 ;
 
 // -------------------------------------------------------------
-PUCHAR  slurp  (PUCHAR out  , PUCHAR * buf)                  {
-   PUCHAR ret  = out;
-   PUCHAR p = *buf;
-   while (*p && *p != ';'      ) {
-      *(out ++) = *(p ++);
-   }
-   *out = '\0';
-   *buf = p + 1; // After the delimiter
-   return ret;
-}
-// -------------------------------------------------------------
-int  parseMeta  (int argc, char ** argv, PUCHAR sqlStmt, PPARMS pParms )
-{
-   int i;
-   int parmNum =0;
-   // Parameter and data comes in pairs from parameter 3 and to the end
-   for (i=3 ; i < argc ; i += 2) {
-      PPARMS pParm = &pParms [parmNum++];
-      PUCHAR pMeta = argv[i];
-      PUCHAR pValue = argv[i+1];
-      UCHAR  temp [32];
-      PUCHAR pTemp = temp;
-      pParm->parmNo = parmNum; // stored so number will match id CL parm is not passed
-      slurp   (pParm->name     ,  &pMeta);
-      pParm->cltype  = atoi(slurp   (temp, &pMeta));
-      pParm->sqltype = atoi(slurp   (temp, &pMeta));
-      pParm->len     = atoi(slurp   (temp, &pMeta));
-      pParm->dec     = atoi(slurp   (temp, &pMeta));
-      slurp   (temp ,  &pMeta);
-      if      (strcmp (temp, "IN") == 0)  pParm->usage = SQL_PARAM_INPUT;
-      else if (strcmp (temp, "OUT") == 0) pParm->usage = SQL_PARAM_OUTPUT;
-      else                                pParm->usage = SQL_PARAM_INPUT_OUTPUT;
-
-      pParm->attr = *pValue;
-      pParm->data = pValue +1;
-
-      // Return values always pase the len in commands
-      if (pParm->usage == SQL_PARAM_OUTPUT
-      || pParm->usage  == SQL_PARAM_INPUT_OUTPUT) {
-         // All data not having "VARRYING" - we insert space
-         if (pParm->sqltype != SQL_VARCHAR
-         &&  pParm->sqltype != SQL_WVARCHAR
-         &&  pParm->sqltype != SQL_VARGRAPHIC
-         &&  pParm->sqltype != SQL_VARBINARY) {
-            pParm->data = pValue +3;
-         }
-         // Decimal have precision and size on VARRYING parameter
-         // Yes - but you can not use it from a CL program :(
-         // if (pParm->sqltype == SQL_DECIMAL) {
-         //    pParm->dec     = pValue[1];
-         //    pParm->len     = pValue[2];
-         // }
-      }
-
-      if  (pParm->sqltype == SQL_DECIMAL) {
-         pParm->bufLenOut = pParm->bufLenIn = (pParm->len / 2) +1;
-      } else {
-         pParm->bufLenOut = pParm->bufLenIn =pParm->len; // TODO !!
-      }
-
-   }
-   return parmNum;
-}
-
-// -------------------------------------------------------------
 int main(int argc, char ** argv) {
 
    SQLRETURN rc;
@@ -110,12 +45,85 @@ int main(int argc, char ** argv) {
       sndpgmmsg ( "CPF9898", QCPFMSG , ESCAPE , 3,  "CMD4SQL Failed: %s. See previous messages", argv[0]);
    }
 }
+// -------------------------------------------------------------
+PUCHAR  slurp  (PUCHAR out  , PUCHAR * buf)                  {
+   PUCHAR ret  = out;
+   PUCHAR p = *buf;
+   while (*p && *p != ';'      ) {
+      *(out ++) = *(p ++);
+   }
+   *out = '\0';
+   *buf = p + 1; // After the delimiter
+   return ret;
+}
+// -------------------------------------------------------------
+int  parseMeta  (int argc, char ** argv, PUCHAR sqlStmt, PPARMS pParms )
+{
+   int i;
+   int parmNum =0;
+   // Parameter and data comes in pairs from parameter 3 and to the end
+   for (i=3 ; i < argc ; i += 3) {
+      PUCHAR pMeta  = argv[i];
+      PUCHAR pName  = argv[i+1];
+      PUCHAR pValue = argv[i+2];
+      UCHAR  temp [32];
+      PUCHAR pTemp = temp;
+      PPARMS pParm;
+
+      // When parameter is not give, the omit is both in SQL statement AND bind parameter;
+      if (pValue == NULL )         continue; // RTVVAR is not given ( pointer to null-buffer)
+      if (((*pValue) & 0x40) != 0) continue; // Not passed  (the attribute byte) 
+
+      pParm = &pParms [parmNum++];
+      
+      pParm->parmNo = parmNum; // stored so number will match id CL parm is not passed
+      slurp   (pParm->name     ,  &pName);
+      pParm->clType    = atoi(slurp   (temp, &pMeta));
+      pParm->sqlType   = atoi(slurp   (temp, &pMeta));
+      pParm->len       = atoi(slurp   (temp, &pMeta));
+      pParm->dec       = atoi(slurp   (temp, &pMeta));
+      pParm->isVarying = atoi(slurp   (temp, &pMeta));
+      
+      slurp   (temp ,  &pMeta);
+      if      (strcmp (temp, "IN") == 0)  pParm->usage = SQL_PARAM_INPUT;
+      else if (strcmp (temp, "OUT") == 0) pParm->usage = SQL_PARAM_OUTPUT;
+      else                                pParm->usage = SQL_PARAM_INPUT_OUTPUT;
+
+      pParm->attr = *pValue;
+      pParm->data = pValue +1;
+
+      // Return values always passes the len in commands
+      if (pParm->usage == SQL_PARAM_OUTPUT
+      || pParm->usage  == SQL_PARAM_INPUT_OUTPUT) {
+         // All data not having "VARRYING" - we insert space for the varying length
+         if  (! pParm->isVarying)  {
+            pParm->data = pValue +3;
+         }
+         // Decimal have precision and size on VARRYING parameter
+         // Yes - but you can not use it from a CL program :(
+         // if (pParm->sqlType == SQL_DECIMAL) {
+         //    pParm->dec     = pValue[1];
+         //    pParm->len     = pValue[2];
+         // }
+      }
+
+      if  (pParm->sqlType == SQL_DECIMAL) {
+         pParm->bufLenOut = pParm->bufLenIn = (pParm->len / 2) +1;
+      } else {
+         pParm->bufLenOut = pParm->bufLenIn =pParm->len; // TODO !!
+      }
+
+   }
+   return parmNum;
+}
+
 
 // -------------------------------------------------------------
 void buildSQLstatement (int argc, char ** argv, PUCHAR sqlStmt , int parmNum , PPARMS pParms )
 {
    int i;
    PUCHAR pMeta = argv[1];
+   UCHAR  version     [5];
    UCHAR  routineType [32];
    UCHAR  schemaName  [32];
    UCHAR  routineName [32];
@@ -123,7 +131,8 @@ void buildSQLstatement (int argc, char ** argv, PUCHAR sqlStmt , int parmNum , P
    PUCHAR comma;
 
 
-   // first the procedure / function call
+   // first the how and what to call (procedure / function call)
+   slurp (version         ,  &pMeta );
    slurp (routineType     ,  &pMeta );
    slurp (schemaName      ,  &pMeta );
    slurp (routineName     ,  &pMeta );
@@ -235,8 +244,8 @@ SQLRETURN run (int argc, char ** argv, PUCHAR sqlStmt ,int parmNum , PPARMS pPar
          hstmt,             // hstmt
          pParm->parmNo,               // Parm number
          pParm->usage  ,    // fParamType           !! TODO from command
-         pParm->cltype ,    // data type here in C  !! TODO from command
-         pParm->sqltype,    // datatype in SQL      !! TODO from command
+         pParm->clType ,    // data type here in C  !! TODO from command
+         pParm->sqlType,    // datatype in SQL      !! TODO from command
          pParm->len,        // precision - ignored for strings
          pParm->dec,        // decimals
          pParm->data,       // buffer ,
@@ -305,7 +314,7 @@ void checkError (
    SQLSMALLINT length;
    while (SQL_SUCCESS == SQLError(henv, hdbc, hstmt, sqlstate, &sqlcode, buffer,
                      SQL_MAX_MESSAGE_LENGTH + 1, &length)  ){
-      sndpgmmsg ( "CPF9898", QCPFMSG, INFO, 1,  "%s. sqlstate: %s, sqlcode: %ld" , 
+      sndpgmmsg ( "CPF9898", QCPFMSG, DIAG, 1,  "%s. sqlstate: %s, sqlcode: %ld" , 
          buffer , sqlstate, sqlcode 
       );
    };

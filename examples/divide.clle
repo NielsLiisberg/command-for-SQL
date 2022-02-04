@@ -1,17 +1,17 @@
 PGM                                                                  
              DCL        VAR(&DIVISOR)  TYPE(*DEC) LEN(5 2) VALUE(1.23)      
-             DCL        VAR(&DIVIDENT) TYPE(*DEC) LEN(5 2) VALUE(2.34)      
+             DCL        VAR(&DIVIDEND) TYPE(*DEC) LEN(5 2) VALUE(2.34)      
              DCL        VAR(&RESULT)   TYPE(*DEC) LEN(5 2) VALUE(0)      
              DCL        VAR(&TEXT) TYPE(*CHAR) LEN(6)                
                                                                      
              /* Do the magic - Call the procedure "divide" */                
-             CMD4SQL/DIVIDE  DIVISOR(&DIVISOR) DIVIDENT(&DIVIDENT) RES(&RESULT)                           
+             CMD4SQL/DIVIDE  DIVISOR(&DIVISOR) DIVIDEND(&DIVIDEND) RES(&RESULT)                           
                                                                      
              CHGVAR     VAR(&TEXT) VALUE(&RESULT)                         
              SNDPGMMSG  MSG('Divide by procedure: ' *BCAT &TEXT)                      
                                                                      
              /* Do the magic - Call the function "divide" */                
-             CMD4SQL/DIVFUNC  DIVISOR(&DIVISOR) DIVIDENT(&DIVIDENT) RTNVAR1(&RESULT)                           
+             CMD4SQL/DIVFUNC  DIVISOR(&DIVISOR) DIVIDEND(&DIVIDEND) RTNVAR1(&RESULT)                           
                                                                      
              CHGVAR     VAR(&TEXT) VALUE(&RESULT)                         
              SNDPGMMSG  MSG('Divide by function: ' *BCAT &TEXT)                      

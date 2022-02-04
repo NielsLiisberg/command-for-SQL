@@ -38,10 +38,6 @@ cmd4sql.pgm: sndpgmmsg.c sqlcmdexc.c
 	-system -q "CRTLIB $* TYPE(*TEST) TEXT('CMD4SQL: Command for SQL functions and procedures')" 
 	
 
-%.entry:
-	# Basically do nothing..
-	@echo "Adding binding entry $*"
-
 %.sql:
 	-system "RUNSQLSTM SRCSTMF('sql/$*.sql') COMMIT(*NONE)  "
 
@@ -60,7 +56,7 @@ cmd4sql.pgm: sndpgmmsg.c sqlcmdexc.c
 
 %.pgm:
 	
-	# You may be wondering what this ugly string is. It's a list of objects created from the dep list that end with .c or .clle.
+	# You may be wondering what this ugly string is. It's a list of module objects created from the dep list that end with .c or .clle.
 	$(eval modules := $(patsubst %,$(BIN_LIB)/%,$(basename $(filter %.c %.clle,$(notdir $^)))))
 	
 	system -q -kpieb "CRTPGM PGM($(BIN_LIB)/$*) MODULE($(modules)) ACTGRP(QILE) TGTRLS($(TARGET_RLS))"
