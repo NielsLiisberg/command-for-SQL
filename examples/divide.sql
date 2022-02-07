@@ -5,6 +5,7 @@ create or replace procedure cmd4sql.divide (
     in  divisor dec(5, 2)  ,
     out res dec( 5, 2)
 ) 
+specific divproc
 set option dbgview = *source , output=*print, commit=*NONE                                                                          
 begin 
     set res = dividend / divisor ;
@@ -41,6 +42,7 @@ create or replace function cmd4sql.divide (
     divisor dec(5, 2)  
 )
 returns dec ( 5, 2) 
+specific divfunc
 set option dbgview = *source , output=*print, commit=*NONE                                                                          
 
 begin 

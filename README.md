@@ -169,17 +169,35 @@ the data types in your CL program and how they are declared in the function
 or procedure in SQL ( more precise in SQLCLI).
 
 Then **CREATE_CL_COMMAND** produces a temporary source where each parameter
-comes in pairs: 
+comes in pairs of three: 
 
-FIRST: a meta parameter - declaring a command constant ( that is not visible when prompting) 
-containing the real name of the parameter in your SQL function or procedure, since 
-CL has the limitation of 10 chars for parameter names. 
+### FIRST: ### 
+The first command constant contains 
+ the real name of the parameter in your SQL function 
+or procedure, since CL has the limitation of 10 chars for parameter names. 
+
+Note: ( command constant is not visible when prompting).
+
+
+
+### SECOND: ### 
+A meta parameter - declaring a command constant ( that is not visible when prompting) 
 Then the CL data type and and SQLCLI equivalent - Here we let SQL handle the
 conversion of data types under the hood, where it is possible, 
 but some like ROW_ID is not supported (yet).
 
-SECOND: This is a normal parameter description as you will use it in any 
-other command definition, shown when prompting - not magic here.
+### THIRD: ###
+This is a normal parameter description as you will use it in any 
+other command definition, shown when prompting. The parameter is 
+defined with some extra keywords: 
+
+Pass attribute byte: This gives the runtime CMD4SQL program the possibility 
+to determine if the parameter is passed by the CL program or command line.
+
+The RTNVAR is set for OUT and INOUT parameters to support that SQL can 
+deliver data back to the calling CL program. 
+
+### Besides parameters: ### 
 
 Also the kind and name of function or procedure are stored, so it 
 knows how and what to call.
@@ -194,9 +212,13 @@ is set to be an *optional* in the command. The later CMD4SQL program
 figures out at runtime if the parameter is given or not and
 let SQL deal with the default value. So no defaults is the command it self.
 
+Please notice: That CL requires that **required** parameters 
+have to be listed first, so the order of parameters is 
+rearrange in ordinal position but with required parameters first.
+
 Also notice that; if you have any OUT or INOUT or calling a scalar 
-function, then it will compile the command to allow it to run 
-only on *IPGM and *BPGM since CL has no idea how to return 
+function, then your command will be compiled with the options to allow it to run 
+only in *IPGM and *BPGM since CL has no idea how to return 
 values if it is started from i.e. the command line.
 
 ### the CMD4SQL program
@@ -220,11 +242,15 @@ and running.
 ## Build from scratch
 Please also be involved, and let's make this project even better together:
 
-Clone this project into **/prj** on your IFS on your **IBM i** and run a **gmake all** and it will compile and build everything 
+Clone this project into **/prj** on your IFS on your **IBM i** and 
+run a **gmake all** and it will compile and build everything. 
 
 ## Final thoughts
 What if your procedure was returning a open cursor? or what if you are 
-using a UDTF that returns a table. Well I haven't figured that out yet - still room for improvements. Nevertheless, what I have solved so far is already extremely useful for simple integration between SQL and CL, and perhaps IBM will 
+using a UDTF that returns a table. Well I haven't figured that out yet - 
+still room for improvements and lots of corners not tested yet. 
+Nevertheless, what I have solved so far is already extremely useful for 
+simple integration between SQL and CL, and perhaps IBM will 
 take a look at this project and integrate it in IBM i releases to come. 
 
 This project is made available under the Apache license for this particular reason.

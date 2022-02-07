@@ -68,8 +68,6 @@ all:
 
 clean:
 	-system -q "DLTOBJ OBJ($(BIN_LIB)/*ALL) OBJTYPE(*MODULE)"
-	-system -q "DLTOBJ OBJ($(BIN_LIB)/XMP*) OBJTYPE(*PGM)"
-	-system -q "DLTOBJ OBJ($(BIN_LIB)/CMD4SQL) OBJTYPE(*PGM)"
 	
 
 	
