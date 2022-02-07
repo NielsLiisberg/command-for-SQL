@@ -63,8 +63,8 @@ int  parseMeta  (int argc, char ** argv, PUCHAR sqlStmt, PPARMS pParms )
    int parmNum =0;
    // Parameter and data comes in pairs from parameter 3 and to the end
    for (i=3 ; i < argc ; i += 3) {
-      PUCHAR pMeta  = argv[i];
-      PUCHAR pName  = argv[i+1];
+      PUCHAR pName  = argv[i+0];
+      PUCHAR pMeta  = argv[i+1];
       PUCHAR pValue = argv[i+2];
       UCHAR  temp [32];
       PUCHAR pTemp = temp;
@@ -72,7 +72,7 @@ int  parseMeta  (int argc, char ** argv, PUCHAR sqlStmt, PPARMS pParms )
 
       // When parameter is not give, the omit is both in SQL statement AND bind parameter;
       if (pValue == NULL )         continue; // RTVVAR is not given ( pointer to null-buffer)
-      if (((*pValue) & 0x40) != 0) continue; // Not passed  (the attribute byte) 
+      if (((*pValue) & 0x80) == 0) continue; // Leftmost bit of (the attribute byte) = 0 then parm not passed   
 
       pParm = &pParms [parmNum++];
       

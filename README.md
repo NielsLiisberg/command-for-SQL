@@ -257,8 +257,6 @@ RSTLIB SAVLIB(CMD4SQL) DEV(*SAVF) SAVF(CMD4SQL/RELEASE)
 ```
 
 
-
-
 ## Build from scratch
 Please also be involved, and let's make this project even better together:
 

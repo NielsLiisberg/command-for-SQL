@@ -11,14 +11,23 @@ begin
     declare stmt               varchar(256);
     declare msg                varchar(256);
     declare title              varchar(50);
-    declare parm_text          varchar(50);
+    declare parm_text          varchar(30);
     declare choice_text        varchar(32);
     declare parm_declarartion  varchar(256);
     declare sql_len            varchar(32) ;
     declare allow_mode         varchar(32) default '*ALL';
     declare required           varchar(32);
+    declare parm_name_by_comment varchar(32);
+    declare keyword_name       varchar(32);
     declare out_parm_counter   int default 0;
     declare dummy              int;
+
+    set create_CL_command.command_name    = upper(create_CL_command.command_name)  ;
+    set create_CL_command.library_name    = upper(create_CL_command.library_name)  ;
+    set create_CL_command.routine_type    = upper(create_CL_command.routine_type)  ;
+    set create_CL_command.routine_name    = upper(create_CL_command.routine_name)  ;
+    set create_CL_command.routine_schema  = upper(create_CL_command.routine_schema);
+    
 
     for a as 
         select rrn(sysroutines) as id ,sysroutines.*         
@@ -112,8 +121,19 @@ begin
 
             do
                 set parm_declarartion = '';
-                set required = case when c.default is null then 'MIN(1) ' else '' end;    
-                                
+                set parm_name_by_comment = '';
+                set required = case when c.default is null then 'MIN(1) ' else '' end;  
+
+
+                -- Name from the comment, given i n parentheses: 
+                set keyword_name = parameter_name;
+                if c.long_comment is not null then 
+                    set parm_name_by_comment =  regexp_substr (c.long_comment , '\((.*)\)' , 1, 1, 'i' , 1 ); 
+                    if  parm_name_by_comment is not null then
+                        set keyword_name  = parm_name_by_comment;
+                    end if;    
+                end if;
+                                                 
                 if cl_parm_type = '????' then 
                     set msg = 'Datatype ' concat sql_parm_type concat 'is not supported';
                     signal  sqlstate 'NLI02' set message_text  = msg;
@@ -161,9 +181,23 @@ begin
                 end case; 
                 
                 -- Still null ( then IBM i build-in )                        
-                set parameter_name = ifnull(parameter_name , 'PARM' concat row_no);
+                if parameter_name is null then 
+                    set parameter_name = 'PARM' concat row_no;
+                end if;
                 
-                -- First: Put the meta data
+                if keyword_name is null then 
+                    set keyword_name = parameter_name;
+                end if;
+                
+                -- First: Put the parameter name as meta info
+                set stmt = 'PARM KWD(NAME' concat row_no concat ') '  concat required concat
+                    ' TYPE(*CHAR) LEN(30) CONSTANT(''' concat
+                    rtrim(parameter_name) concat ';'  concat
+                    ''')' ;
+
+                insert into qtemp.xxtempsrc (srcdta) values(ifnull(stmt, '???')); 
+                
+                -- Second: Put the meta data
                 set stmt = 'PARM KWD(META' concat row_no concat ') '  concat required concat 
                     ' TYPE(*CHAR) LEN(30) CONSTANT(''' concat
                     cl_data_type concat ';' concat 
@@ -175,17 +209,10 @@ begin
 
                 insert into qtemp.xxtempsrc (srcdta) values(ifnull(stmt, '???')); 
 
-                -- Second: Put the parameter name 
-                set stmt = 'PARM KWD(NAME' concat row_no concat ') '  concat required concat
-                    ' TYPE(*CHAR) LEN(30) CONSTANT(''' concat
-                    rtrim(parameter_name) concat ';'  concat
-                    ''')' ;
-
-                insert into qtemp.xxtempsrc (srcdta) values(ifnull(stmt, '???')); 
 
                 -- Human readable version of the paramter name
                 if long_comment is not null then
-                    set parm_text = rtrim(long_comment);
+                    set parm_text = rtrim(regexp_substr (long_comment , '(.*)\(' , 1, 1, 'i' , 1 ));
                 else                 
                     set parm_text = Upper(substr(parameter_name, 1 , 1)) concat lower(substr(parameter_name , 2));
                     set parm_text = replace (parm_text , '_' , ' ');
@@ -199,8 +226,8 @@ begin
                     set parm_declarartion = parm_declarartion concat 'VARY(*YES *INT2) ';
                 end if;
 
-                -- Second: Put the parameter 
-                set stmt = 'PARM KWD(' concat rtrim(substr(parameter_name, 1 , 10)) concat ') '  concat
+                -- Last: Put the parameter 
+                set stmt = 'PARM KWD(' concat rtrim(substr(keyword_name, 1 , 10)) concat ') '  concat
                     parm_declarartion  concat
                     'PROMPT(''' concat parm_text concat ''') ' concat
                     'PASSATR(*YES) ' concat 
