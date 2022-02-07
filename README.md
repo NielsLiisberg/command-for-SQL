@@ -237,7 +237,27 @@ procedure of function with a **SQLexecute** ... simple as that.
 
 This project also contains a "release" folder where you will find a savefile. So 
 simply transfer that your IFS and restore the library CMD4SQL, and you are up 
-and running. 
+and running.
+
+The simplest way: In the SQL directory you will find **install.sql** Simply
+Paste that content into you *ACS Run SQL script* 
+
+But you can also do that manually:
+
+First download this to i.e. /tmp on your IFS:
+
+https://github.com/NielsLiisberg/command-for-SQL/raw/main/release/release.savf
+
+Then run this:
+
+```
+CRTLIB CMD4SQL 
+CPYFRMSTMF FROMSTMF('/tmp/release.savf') TOMBR('/QSYS.lib/CMD4SQL.lib/RELEASE.FILE') MBROPT(*REPLACE) CVTDTA(*NONE)
+RSTLIB SAVLIB(CMD4SQL) DEV(*SAVF) SAVF(CMD4SQL/RELEASE)
+```
+
+
+
 
 ## Build from scratch
 Please also be involved, and let's make this project even better together:
