@@ -125,10 +125,10 @@ Open your CL editor of choice, create a new CLLE member DIVIDE and past and comp
 
 ```
 PGM                                                                  
-    DCL        VAR(&DIVISOR)  TYPE(*DEC) LEN(5 2) VALUE(123)      
-    DCL        VAR(&DIVIDEND) TYPE(*DEC) LEN(5 2) VALUE(2.34)      
-    DCL        VAR(&RESULT)   TYPE(*DEC) LEN(5 2) VALUE(0)      
-    DCL        VAR(&TEXT) TYPE(*CHAR) LEN(6)                
+    DCL        VAR(&DIVISOR)  TYPE(*DEC)  LEN(5 2) VALUE(123)      
+    DCL        VAR(&DIVIDEND) TYPE(*DEC)  LEN(5 2) VALUE(2.34)      
+    DCL        VAR(&RESULT)   TYPE(*DEC)  LEN(5 2) VALUE(0)      
+    DCL        VAR(&TEXT)     TYPE(*CHAR) LEN(6)                
                                                             
     /* Do the magic - Call the procedure "divide" */                
     CMD4SQL/DIVIDE  DIVISOR(&DIVISOR) DIVIDEND(&DIVIDEND) RES(&RESULT)                           
@@ -173,11 +173,11 @@ comes in pairs of three:
 
 ### FIRST: ### 
 The first command constant contains 
- the real name of the parameter in your SQL function 
-or procedure, since CL has the limitation of 10 chars for parameter names. 
+the real name of the parameter in your SQL function 
+or procedure, since CL has the limitation of 10 chars for parameter names.
+That gives us up to 30 as maximum for the parameter name.  
 
-Note: ( command constant is not visible when prompting).
-
+Note: (command constant is not visible when prompting).
 
 
 ### SECOND: ### 
@@ -220,6 +220,17 @@ Also notice that; if you have any OUT or INOUT or calling a scalar
 function, then your command will be compiled with the options to allow it to run 
 only in *IPGM and *BPGM since CL has no idea how to return 
 values if it is started from i.e. the command line.
+
+### Parameter naming ###
+Function and procedure parameters can have names up to 32 chars long. This is not supported 
+in CL. Perhaps you also need to give the parameter a more descriptive prompt. 
+
+To mitigate this you can add **comment on parameter** . You cat suffix the description 
+with tha parameter name of your choice given in parenthesis. 
+
+```
+comment on parameter schema.procedure is 'Nice parameter description (PARMNAME)';
+```
 
 ### the CMD4SQL program
 I have used SQLCLI for this task. SQLCLI - *callable interface* 

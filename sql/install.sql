@@ -17,8 +17,8 @@ begin
         overwrite => 'REPLACE'
     );
     
-    call qcmdexc ('CRTLIB CMD4SQL'); 
+    call qcmdexc ('CRTLIB LIB(CMD4SQL) TYPE(*TEST) TEXT(''Commands for SQL procedures and functions'')'); 
     call qcmdexc ('CPYFRMSTMF FROMSTMF(''/tmp/release.savf'') TOMBR(''/QSYS.lib/CMD4SQL.lib/RELEASE.FILE'') MBROPT(*REPLACE) CVTDTA(*NONE)');
     call qcmdexc ('RSTLIB SAVLIB(CMD4SQL) DEV(*SAVF) SAVF(CMD4SQL/RELEASE)');
 
-end; 
+end;

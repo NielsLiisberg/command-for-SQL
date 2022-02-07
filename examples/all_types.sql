@@ -24,8 +24,8 @@ call cmd4sql.create_CL_command (
 
 select * from xxtempsrc;
 
--- The inc procedure:
----------------------
+-- The inc procedure ( test of INOUT):
+--------------------------------------
 create or replace procedure cmd4sql.inc (
     inout a decimal ( 5 , 2)
 )
@@ -44,33 +44,6 @@ call cmd4sql.create_CL_command (
     library_name => 'CMD4SQL'
 );
 
-drop procedure cmd4sql.inc;         
-create or replace procedure cmd4sql.inc (
-    inout a varchar (256)
-)
-set option output=*print, commit=*none, dbgview = *list 
-begin 
-    set a = a concat a;
-end;
-
-call inc ('s');
-
-create or replace procedure cmd4sql.inc (
-    inout a varchar (256)
-)
-set option output=*print, commit=*none, dbgview = *list 
-begin 
-    set a = a concat a;
-end;
-
---------------------
-drop procedure cmd4sql.inc;
-create or replace procedure cmd4sql.inc (
-    inout a int
-) 
-begin 
-    set a = a + 1;
-end;
 
 
 
