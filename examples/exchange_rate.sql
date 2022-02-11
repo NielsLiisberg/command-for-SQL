@@ -1,4 +1,4 @@
-create or replace function cmd4sql.exchange_rate (
+﻿create or replace function cmd4sql.exchange_rate (
     currency_code char(3) 
 ) 
 returns
@@ -30,11 +30,11 @@ values (
 );
 
 call cmd4sql.create_CL_command (
--- Input function 
+-- Input function or procedure 
     routine_type => 'FUNCTION',
     routine_name => 'EXCHANGE_RATE',
-    routine_schema => 'NLI',
+    routine_schema => 'CMD4SQL',
 -- Output command    
     command_name => 'GETEXCRTE',
-    library_name => 'NLI'
+    library_name => 'CMD4SQL'
 );
