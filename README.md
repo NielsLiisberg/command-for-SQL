@@ -221,6 +221,10 @@ function, then your command will be compiled with the options to allow it to run
 only in *IPGM and *BPGM since CL has no idea how to return 
 values if it is started from i.e. the command line.
 
+Since CL commands have the limitation of max 100 parameters and we are 
+using three parameters for each SQL parameter. Then the limit of parameters 
+will be 32. 
+
 ### Parameter naming ###
 Function and procedure parameters can have names up to 32 chars long. This is not supported 
 in CL. Perhaps you also need to give the parameter a more descriptive prompt. 

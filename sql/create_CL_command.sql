@@ -133,20 +133,37 @@ begin
                         set keyword_name  = parm_name_by_comment;
                     end if;    
                 end if;
+
+                -- Huxi: Fix types: TODO :( 
+                -- DATE and TIME is not supported as RTNVAL, we change them to CHAR
+                if parameter_mode  in ('OUT' ,'INOUT') then 
+                    if cl_parm_type = 'DATE' 
+                    or cl_parm_type = 'TIME' then
+                        set (cl_data_type, cl_parm_type) = (1 ,'CHAR');
+                    end if;
+                end if;  
+                        
                                                  
                 if cl_parm_type = '????' then 
                     set msg = 'Datatype ' concat sql_parm_type concat 'is not supported';
                     signal  sqlstate 'NLI02' set message_text  = msg;
                 end if; 
 
+                -- Ajust for CL limitationer: 15,9 is the max:
                 if  numeric_precision is not null and numeric_precision > 15 then
                     set numeric_precision = 15;
                 end if;
 
+                if  numeric_scale is not null and numeric_scale > 9 then
+                    set numeric_scale = 9;
+                end if;
+
                 set numeric_scale = ifnull(numeric_scale , 0);
 
-                if substr( cl_parm_type , 1, 3) = 'INT'  then
-                    set sql_len = numeric_precision concat ';' concat numeric_scale;
+                if substr( cl_parm_type , 1, 3) = 'INT'  
+                or cl_parm_type  = 'DATE' 
+                or cl_parm_type = 'TIME' then
+                    set sql_len =  ifnull ( numeric_precision , 0) concat ';' concat ifnull(numeric_scale, 0);
                     set choice_text = cl_parm_type ;
                 elseif numeric_precision is not null then
                     set parm_declarartion = parm_declarartion concat ' LEN(' concat numeric_precision concat ' ' concat numeric_scale concat ') ';
@@ -170,9 +187,8 @@ begin
                         set allow_mode = '*BPGM *IPGM';
                         set parm_declarartion = parm_declarartion concat ' RTNVAL(*YES) ';
                         -- return values must always have varying
-                        if locate('VARY(*YES)' , parm_declarartion) <= 0 then   
-                            set parm_declarartion = parm_declarartion concat ' VARY(*YES) ';
-                        end if;    
+                        set is_varying = 1;
+
                         if parameter_name is null then
                             set out_parm_counter = out_parm_counter + 1;
                             set parameter_name = 'RTNVAR' concat out_parm_counter;

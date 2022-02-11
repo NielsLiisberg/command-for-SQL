@@ -70,12 +70,10 @@ int  parseMeta  (int argc, char ** argv, PUCHAR sqlStmt, PPARMS pParms )
       PUCHAR pTemp = temp;
       PPARMS pParm;
 
-      // When parameter is not give, the omit is both in SQL statement AND bind parameter;
-      if (pValue == NULL )         continue; // RTVVAR is not given ( pointer to null-buffer)
-      if (((*pValue) & 0x80) == 0) continue; // Leftmost bit of (the attribute byte) = 0 then parm not passed   
+      if (pValue == NULL ) continue; // RTVVAR is not given ( pointer to null-buffer)
 
       pParm = &pParms [parmNum++];
-      
+
       pParm->parmNo = parmNum; // stored so number will match id CL parm is not passed
       slurp   (pParm->name     ,  &pName);
       pParm->clType    = atoi(slurp   (temp, &pMeta));
@@ -96,9 +94,9 @@ int  parseMeta  (int argc, char ** argv, PUCHAR sqlStmt, PPARMS pParms )
       if (pParm->usage == SQL_PARAM_OUTPUT
       || pParm->usage  == SQL_PARAM_INPUT_OUTPUT) {
          // All data not having "VARRYING" - we insert space for the varying length
-         if  (! pParm->isVarying)  {
+         // if  (! pParm->isVarying)  {
             pParm->data = pValue +3;
-         }
+         //}
          // Decimal have precision and size on VARRYING parameter
          // Yes - but you can not use it from a CL program :(
          // if (pParm->sqlType == SQL_DECIMAL) {
@@ -112,6 +110,14 @@ int  parseMeta  (int argc, char ** argv, PUCHAR sqlStmt, PPARMS pParms )
       } else {
          pParm->bufLenOut = pParm->bufLenIn =pParm->len; // TODO !!
       }
+
+      // When parameter is not give, the omit is both in SQL statement AND bind parameter;
+      // We regret this parameter 
+      if (pParm->usage == SQL_PARAM_INPUT) {
+         if (((*pValue) & 0x80) == 0) {
+            --parmNum; // Leftmost bit of (the attribute byte) = 0 then parm not passed
+         }  
+      } 
 
    }
    return parmNum;

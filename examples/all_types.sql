@@ -206,6 +206,7 @@ create or replace procedure cmd4sql.common_types  (
     in idate date default null,
     in itime time default null,
     in itimestamp timestamp default null, 
+/*
     out osmallint smallint,
     out ointeger integer ,
     out obigint bigint ,
@@ -219,6 +220,7 @@ create or replace procedure cmd4sql.common_types  (
     out odate date ,
     out otime time ,
     out otimestamp timestamp , 
+*/
     inout iosmallint smallint default null,
     inout iointeger integer default null,
     inout iobigint bigint default null,
