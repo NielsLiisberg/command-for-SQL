@@ -50,7 +50,7 @@ begin
         -- Create the source file for the command            
         call qcmdexc('crtsrcpf qtemp/xxtempsrc mbr(xxtempsrc) rcdlen(240)'); 
         truncate qtemp.xxtempsrc;
-        insert into qtemp.xxtempsrc (srcdta) values('CMD PROMPT(''' concat title concat ''')'); 
+        insert into qtemp.xxtempsrc (srcdta) values('CMD PROMPT(''' concat left(title, 30) concat ''')'); 
 
         -- This is the function or procedure to call, placed 
         -- as a constant in the command and always pased as first parameter
