@@ -61,8 +61,8 @@ int  parseMeta  (int argc, char ** argv, PUCHAR sqlStmt, PPARMS pParms )
 {
    int i;
    int parmNum =0;
-   // Parameter and data comes in pairs from parameter 3 and to the end
-   for (i=3 ; i < argc ; i += 3) {
+   // Parameter and data comes in pairs from parameter 4 and to the end
+   for (i=4 ; i < argc ; i += 3) {
       PUCHAR pName  = argv[i+0];
       PUCHAR pMeta  = argv[i+1];
       PUCHAR pValue = argv[i+2];
@@ -129,6 +129,7 @@ void buildSQLstatement (int argc, char ** argv, PUCHAR sqlStmt , int parmNum , P
 {
    int i;
    PUCHAR pMeta = argv[1];
+   PUCHAR pName = argv[2];
    UCHAR  version     [5];
    UCHAR  routineType [32];
    UCHAR  schemaName  [32];
@@ -141,7 +142,7 @@ void buildSQLstatement (int argc, char ** argv, PUCHAR sqlStmt , int parmNum , P
    slurp (version         ,  &pMeta );
    slurp (routineType     ,  &pMeta );
    slurp (schemaName      ,  &pMeta );
-   slurp (routineName     ,  &pMeta );
+   slurp (routineName     ,  &pName );
 
    switch (*routineType) {
       

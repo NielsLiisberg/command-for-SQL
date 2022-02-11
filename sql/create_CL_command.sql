@@ -10,7 +10,7 @@ set option output=*print, commit=*none, dbgview = *source
 begin
     declare stmt               varchar(256);
     declare msg                varchar(256);
-    declare title              varchar(50);
+    declare title              varchar(30);
     declare parm_text          varchar(30);
     declare choice_text        varchar(32);
     declare parm_declarartion  varchar(256);
@@ -22,12 +22,12 @@ begin
     declare out_parm_counter   int default 0;
     declare dummy              int;
 
+    -- Allow any parameters in lowercase: 
     set create_CL_command.command_name    = upper(create_CL_command.command_name)  ;
     set create_CL_command.library_name    = upper(create_CL_command.library_name)  ;
     set create_CL_command.routine_type    = upper(create_CL_command.routine_type)  ;
     set create_CL_command.routine_name    = upper(create_CL_command.routine_name)  ;
     set create_CL_command.routine_schema  = upper(create_CL_command.routine_schema);
-    
 
     for a as 
         select rrn(sysroutines) as id ,sysroutines.*         
@@ -50,15 +50,20 @@ begin
         -- Create the source file for the command            
         call qcmdexc('crtsrcpf qtemp/xxtempsrc mbr(xxtempsrc) rcdlen(240)'); 
         truncate qtemp.xxtempsrc;
-        insert into qtemp.xxtempsrc (srcdta) values('CMD PROMPT(''' concat left(title, 30) concat ''')'); 
+        insert into qtemp.xxtempsrc (srcdta) values('CMD PROMPT(''' concat title concat ''')'); 
 
         -- This is the function or procedure to call, placed 
         -- as a constant in the command and always pased as first parameter
         -- to the generic routine executor  
         -- The first "1;"" is the version
-        set stmt = 'PARM KWD(ROUTINE) TYPE(*CHAR) LEN(30) MIN(1) CONSTANT(''1;' concat 
+        set stmt = 'PARM KWD(ROUTINETYP) TYPE(*CHAR) LEN(30) MIN(1) CONSTANT(''' concat
+            '1;' concat -- version 
             substr(create_CL_command.routine_type , 1 , 1) concat ';' concat 
             rtrim(create_CL_command.routine_schema) concat ';' concat 
+            ''')';
+        insert into qtemp.xxtempsrc (srcdta) values(stmt);
+
+        set stmt = 'PARM KWD(ROUTINENAM) TYPE(*CHAR) LEN(30) MIN(1) CONSTANT(''' concat 
             rtrim(create_CL_command.routine_name) concat ';' concat
             ''')';
         insert into qtemp.xxtempsrc (srcdta) values(stmt);
@@ -78,31 +83,31 @@ begin
                     is_varying     -- 1=Contains length word,0=Fixed len
                 ) 
                 as ( values  
-                    ('BIGINT'                            ,19  ,3 ,'DEC'  ,0), 
-                    ('INTEGER'                           ,4   ,4 ,'INT4' ,0),
-                    ('SMALLINT'                          ,5   ,5 ,'INT2' ,0),
-                    ('DECIMAL'                           ,3   ,3 ,'DEC'  ,0),
-                    ('NUMERIC'                           ,2   ,3 ,'DEC'  ,0),
-                    ('DOUBLE PRECISION'                  ,6   ,3 ,'DEC'  ,0),
-                    ('REAL'                              ,7   ,3 ,'DEC'  ,0),
-                    ('DECFLOAT'                          ,-360,3 ,'DEC'  ,0),
-                    ('CHARACTER'                         ,1   ,1 ,'CHAR' ,0),
-                    ('CHARACTER VARYING'                 ,12  ,12,'CHAR' ,1),
-                    ('CHARACTER LARGE OBJECT'            ,14  ,12,'CHAR' ,1), 
-                    ('GRAPHIC'                           ,95  ,1 ,'CHAR' ,0), 
-                    ('GRAPHIC VARYING'                   ,96  ,12,'CHAR' ,1), 
-                    ('DOUBLE-BYTE CHARACTER LARGE OBJECT',96  ,12,'CHAR' ,1), 
-                    ('BINARY'                            ,452 ,1 ,'CHAR' ,0), 
-                    ('BINARY VARYING'                    ,448 ,12,'CHAR' ,1), 
-                    ('BINARY LARGE OBJECT'               ,-2  ,12,'CHAR' ,1), 
-                    ('DATE'                              ,91  ,91,'DATE' ,0),
-                    ('TIME'                              ,92  ,92,'TIME' ,0),
-                    ('TIMESTAMP'                         ,93  ,1 ,'CHAR' ,0),
-                    ('DATALINK'                          ,16  ,1 ,'CHAR' ,0),
-                    ('ROWID'                             ,496 ,0 ,'????' ,0),
-                    ('XML'                               ,-370,12,'CHAR' ,1), 
-                    ('DISTINCT'                          ,448 ,0 ,'????' ,0),
-                    ('ARRAY'                             ,448 ,0 ,'????' ,0)
+                    ('BIGINT'                            , 19   , 3  ,'DEC' , 0), 
+                    ('INTEGER'                           , 4    , 4  ,'INT4', 0),
+                    ('SMALLINT'                          , 5    , 5  ,'INT2', 0),
+                    ('DECIMAL'                           , 3    , 3  ,'DEC' , 0),
+                    ('NUMERIC'                           , 2    , 3  ,'DEC' , 0),
+                    ('DOUBLE PRECISION'                  , 6    , 3  ,'DEC' , 0),
+                    ('REAL'                              , 7    , 3  ,'DEC' , 0),
+                    ('DECFLOAT'                          , -360 , 3  ,'DEC' , 0),
+                    ('CHARACTER'                         , 1    , 1  ,'CHAR', 0),
+                    ('CHARACTER VARYING'                 , 12   , 12 ,'CHAR', 1),
+                    ('CHARACTER LARGE OBJECT'            , 14   , 12 ,'CHAR', 1), 
+                    ('GRAPHIC'                           , 95   , 1  ,'CHAR', 0), 
+                    ('GRAPHIC VARYING'                   , 96   , 12 ,'CHAR', 1), 
+                    ('DOUBLE-BYTE CHARACTER LARGE OBJECT', 96   , 12 ,'CHAR', 1), 
+                    ('BINARY'                            , 452  , 1  ,'CHAR', 0), 
+                    ('BINARY VARYING'                    , 448  , 12 ,'CHAR', 1), 
+                    ('BINARY LARGE OBJECT'               , -2   , 12 ,'CHAR', 1), 
+                    ('DATE'                              , 91   , 91 ,'DATE', 0),
+                    ('TIME'                              , 92   , 92 ,'TIME', 0),
+                    ('TIMESTAMP'                         , 93   , 1  ,'CHAR', 0),
+                    ('DATALINK'                          , 16   , 1  ,'CHAR', 0),
+                    ('ROWID'                             , 496  , 0  ,'????', 0),
+                    ('XML'                               , -370 , 12 ,'CHAR', 1), 
+                    ('DISTINCT'                          , 448  , 0  ,'????', 0),
+                    ('ARRAY'                             , 448  , 0  ,'????', 0)
                 )
              
             Select 
@@ -117,7 +122,14 @@ begin
             left join parm_data_type_map on c.data_type = parm_data_type_map.sql_parm_type
             where c.specific_schema = a.specific_schema
             and   c.specific_name   = a.specific_name
-            order by case when c.default is null then ordinal_position else ordinal_position + 1000 end
+            order by case 
+                when routine_type = 'FUNCTION' and parameter_mode  = 'OUT' -- Note; Functions returnvalues have to come last. because of "values ... into ?"
+                    then ordinal_position + 1000 
+                when c.default is null 
+                    then ordinal_position 
+                else 
+                    ordinal_position + 1000 
+            end
 
             do
                 set parm_declarartion = '';
@@ -282,7 +294,7 @@ call cmd4sql.create_CL_command (
 );
 
 -- Generated source:
-select * from qtemp.xxtempsrc;
-cl: CMD4SQL/EXCHRATE;
+-- select * from qtemp.xxtempsrc;
+-- cl: CMD4SQL/EXCHRATE;
 
-select row_number() over() id, a.* from sysparms a;
+--select row_number() over() id, a.* from sysparms a;
