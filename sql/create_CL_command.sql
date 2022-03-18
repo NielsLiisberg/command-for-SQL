@@ -297,17 +297,10 @@ call cmd4sql.create_CL_command (
     routine_name => 'EXCHANGE_RATE',
     routine_schema => 'CMD4SQL'
 );
-call cmd4sql.create_CL_command ( 
-    command_name => 'TEST',
-    library_name => 'CMD4SQL',
-    routine_type => 'FUNCTION',
-    routine_name => 'get_short_table_name',
-    routine_schema => 'yxdb'
-);
 
 
 -- Generated source:
-select * from qtemp.xxtempsrc;
+-- select * from qtemp.xxtempsrc;
 
 -- Generated source:
 -- select * from qtemp.xxtempsrc;
