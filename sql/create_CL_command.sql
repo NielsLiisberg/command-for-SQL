@@ -21,6 +21,7 @@ begin
     declare keyword_name       varchar(32);
     declare out_parm_counter   int default 0;
     declare dummy              int;
+    declare out_type           int; 
 
     -- Allow any parameters in lowercase: 
     set create_CL_command.command_name    = upper(create_CL_command.command_name)  ;
@@ -77,37 +78,38 @@ begin
         for c as
             with parm_data_type_map (
                     sql_parm_type, -- Type from SYSPARMS
-                    sql_data_type, -- SQLCLI type in procedure/function
+                    sql_data_type, -- SQLCLI type in procedure/function 
                     cl_data_type,  -- CL datatype as SQLCLI type
+                    cl_return_type, -- Datatype for CL in function return
                     cl_parm_type,  -- Parameter type in command
                     is_varying     -- 1=Contains length word,0=Fixed len
                 ) 
                 as ( values  
-                    ('BIGINT'                            , 19   , 3  ,'DEC' , 0), 
-                    ('INTEGER'                           , 4    , 4  ,'INT4', 0),
-                    ('SMALLINT'                          , 5    , 5  ,'INT2', 0),
-                    ('DECIMAL'                           , 3    , 3  ,'DEC' , 0),
-                    ('NUMERIC'                           , 2    , 3  ,'DEC' , 0),
-                    ('DOUBLE PRECISION'                  , 6    , 3  ,'DEC' , 0),
-                    ('REAL'                              , 7    , 3  ,'DEC' , 0),
-                    ('DECFLOAT'                          , -360 , 3  ,'DEC' , 0),
-                    ('CHARACTER'                         , 1    , 1  ,'CHAR', 0),
-                    ('CHARACTER VARYING'                 , 12   , 12 ,'CHAR', 1),
-                    ('CHARACTER LARGE OBJECT'            , 14   , 12 ,'CHAR', 1), 
-                    ('GRAPHIC'                           , 95   , 1  ,'CHAR', 0), 
-                    ('GRAPHIC VARYING'                   , 96   , 12 ,'CHAR', 1), 
-                    ('DOUBLE-BYTE CHARACTER LARGE OBJECT', 96   , 12 ,'CHAR', 1), 
-                    ('BINARY'                            , 452  , 1  ,'CHAR', 0), 
-                    ('BINARY VARYING'                    , 448  , 12 ,'CHAR', 1), 
-                    ('BINARY LARGE OBJECT'               , -2   , 12 ,'CHAR', 1), 
-                    ('DATE'                              , 91   , 91 ,'DATE', 0),
-                    ('TIME'                              , 92   , 92 ,'TIME', 0),
-                    ('TIMESTAMP'                         , 93   , 1  ,'CHAR', 0),
-                    ('DATALINK'                          , 16   , 1  ,'CHAR', 0),
-                    ('ROWID'                             , 496  , 0  ,'????', 0),
-                    ('XML'                               , -370 , 12 ,'CHAR', 1), 
-                    ('DISTINCT'                          , 448  , 0  ,'????', 0),
-                    ('ARRAY'                             , 448  , 0  ,'????', 0)
+                    ('BIGINT'                            , 19   , 3  , 3  ,'DEC' , 0), 
+                    ('INTEGER'                           , 4    , 4  , 4  ,'INT4', 0),
+                    ('SMALLINT'                          , 5    , 5  , 5  ,'INT2', 0),
+                    ('DECIMAL'                           , 3    , 3  , 3  ,'DEC' , 0),
+                    ('NUMERIC'                           , 2    , 3  , 3  ,'DEC' , 0),
+                    ('DOUBLE PRECISION'                  , 6    , 3  , 3  ,'DEC' , 0),
+                    ('REAL'                              , 7    , 3  , 3  ,'DEC' , 0),
+                    ('DECFLOAT'                          , -360 , 3  , 3  ,'DEC' , 0),
+                    ('CHARACTER'                         , 1    , 1  , 1  ,'CHAR', 0),
+                    ('CHARACTER VARYING'                 , 12   , 12 , 1  ,'CHAR', 1),
+                    ('CHARACTER LARGE OBJECT'            , 14   , 12 , 1  ,'CHAR', 1), 
+                    ('GRAPHIC'                           , 95   , 1  , 1  ,'CHAR', 0), 
+                    ('GRAPHIC VARYING'                   , 96   , 12 , 1  ,'CHAR', 1), 
+                    ('DOUBLE-BYTE CHARACTER LARGE OBJECT', 96   , 12 , 1  ,'CHAR', 1), 
+                    ('BINARY'                            , 452  , 1  , 1  ,'CHAR', 0), 
+                    ('BINARY VARYING'                    , 448  , 12 , 1  ,'CHAR', 1), 
+                    ('BINARY LARGE OBJECT'               , -2   , 12 , 1  ,'CHAR', 1), 
+                    ('DATE'                              , 91   , 91 , 91 ,'DATE', 0),
+                    ('TIME'                              , 92   , 92 , 92 ,'TIME', 0),
+                    ('TIMESTAMP'                         , 93   , 1  , 1  ,'CHAR', 0),
+                    ('DATALINK'                          , 16   , 1  , 1  ,'CHAR', 0),
+                    ('ROWID'                             , 496  , 0  , 0  ,'????', 0),
+                    ('XML'                               , -370 , 12 , 1  ,'CHAR', 1), 
+                    ('DISTINCT'                          , 448  , 0  , 0  ,'????', 0),
+                    ('ARRAY'                             , 448  , 0  , 0  ,'????', 0)
                 )
              
             Select 
@@ -117,6 +119,7 @@ begin
                 cast( cl_parm_type as varchar(64)) cl_parm_type,
                 sql_data_type,
                 cl_data_type,
+                cl_return_type,
                 is_varying
             from sysparms c 
             left join parm_data_type_map on c.data_type = parm_data_type_map.sql_parm_type
@@ -132,6 +135,7 @@ begin
             end
 
             do
+                set out_type = case when routine_type = 'FUNCTION' and parameter_mode  = 'OUT' then cl_return_type else cl_data_type end;
                 set parm_declarartion = '';
                 set parm_name_by_comment = '';
                 set required = case when c.default is null then 'MIN(1) ' else '' end;  
@@ -151,7 +155,7 @@ begin
                 if parameter_mode  in ('OUT' ,'INOUT') then 
                     if cl_parm_type = 'DATE' 
                     or cl_parm_type = 'TIME' then
-                        set (cl_data_type, cl_parm_type) = (1 ,'CHAR');
+                        set (out_type , cl_parm_type) = (1 ,'CHAR');
                     end if;
                 end if;  
                         
@@ -204,6 +208,7 @@ begin
                         if parameter_name is null then
                             set out_parm_counter = out_parm_counter + 1;
                             set parameter_name = 'RTNVAR' concat out_parm_counter;
+                            -- set is_varying = 0; -- Vary fails on return values in functions since it is blank on input 
                         end if; 
 
                 end case; 
@@ -228,7 +233,7 @@ begin
                 -- Second: Put the meta data
                 set stmt = 'PARM KWD(META' concat row_no concat ') '  concat required concat 
                     ' TYPE(*CHAR) LEN(30) CONSTANT(''' concat
-                    cl_data_type concat ';' concat 
+                    out_type concat ';' concat 
                     sql_data_type concat ';' concat 
                     sql_len concat ';'  concat 
                     is_varying concat ';' concat 
@@ -292,6 +297,17 @@ call cmd4sql.create_CL_command (
     routine_name => 'EXCHANGE_RATE',
     routine_schema => 'CMD4SQL'
 );
+call cmd4sql.create_CL_command ( 
+    command_name => 'TEST',
+    library_name => 'CMD4SQL',
+    routine_type => 'FUNCTION',
+    routine_name => 'get_short_table_name',
+    routine_schema => 'yxdb'
+);
+
+
+-- Generated source:
+select * from qtemp.xxtempsrc;
 
 -- Generated source:
 -- select * from qtemp.xxtempsrc;
