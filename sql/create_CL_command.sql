@@ -9,6 +9,7 @@ specific CRTCMDSQL
 set option output=*print, commit=*none, dbgview = *source 
 begin
     declare stmt               varchar(256);
+    declare cmd                varchar(4096);
     declare msg                varchar(256);
     declare title              varchar(30);
     declare parm_text          varchar(30);
@@ -49,9 +50,16 @@ begin
         end if;
 
         -- Create the source file for the command            
-        call qcmdexc('crtsrcpf qtemp/xxtempsrc mbr(xxtempsrc) rcdlen(240)'); 
-        truncate qtemp.xxtempsrc;
-        insert into qtemp.xxtempsrc (srcdta) values('CMD PROMPT(''' concat title concat ''')'); 
+        call qcmdexc('CRTPF FILE(CMD4SQL/EVFEVENT) RCDLEN(300)'); 
+        call qcmdexc('crtsrcpf cmd4sql/xxtempsrc rcdlen(240)'); 
+        call qcmdexc('addpfm   cmd4sql/xxtempsrc MBR(' || rtrim(command_name) || ')'); 
+
+        -- call qcmdexc ( 'ovrdbf  evfevent  tofile(cmd4sql/evfevent)  MBR(' || rtrim(command_name) || ') ovrscope(*JOB)');
+        call qcmdexc ( 'ovrdbf  evfevent  tofile(cmd4sql/evfevent)  MBR(*FIRST) ovrscope(*JOB)');
+        call qcmdexc ( 'ovrdbf  XXTEMPSRC tofile(cmd4sql/XXTEMPSRC) MBR(' || rtrim(command_name) || ') ovrscope(*JOB)');
+        
+        delete from xxtempsrc;
+        insert into xxtempsrc (srcdta) values('CMD PROMPT(''' concat title concat ''')'); 
 
         -- This is the function or procedure to call, placed 
         -- as a constant in the command and always pased as first parameter
@@ -62,16 +70,16 @@ begin
             substr(create_CL_command.routine_type , 1 , 1) concat ';' concat 
             rtrim(create_CL_command.routine_schema) concat ';' concat 
             ''')';
-        insert into qtemp.xxtempsrc (srcdta) values(stmt);
+        insert into xxtempsrc (srcdta) values(stmt);
 
         set stmt = 'PARM KWD(ROUTINENAM) TYPE(*CHAR) LEN(30) MIN(1) CONSTANT(''' concat 
             rtrim(create_CL_command.routine_name) concat ';' concat
             ''')';
-        insert into qtemp.xxtempsrc (srcdta) values(stmt);
+        insert into xxtempsrc (srcdta) values(stmt);
 
         -- placeholder for option ( dateformat / commit etc)  TODO
         set stmt = 'PARM KWD(OPTIONS) TYPE(*CHAR) LEN(30) MIN(1) CONSTANT('' '')';
-        insert into qtemp.xxtempsrc (srcdta) values(stmt);
+        insert into xxtempsrc (srcdta) values(stmt);
 
         -- Note: Commands require that parameter with default comes after required parameters; 
         -- hench that odd order by                             
@@ -228,7 +236,7 @@ begin
                     rtrim(parameter_name) concat ';'  concat
                     ''')' ;
 
-                insert into qtemp.xxtempsrc (srcdta) values(ifnull(stmt, '???')); 
+                insert into xxtempsrc (srcdta) values(ifnull(stmt, '???')); 
                 
                 -- Second: Put the meta data
                 set stmt = 'PARM KWD(META' concat row_no concat ') '  concat required concat 
@@ -240,7 +248,7 @@ begin
                     rtrim(parameter_mode) concat ';' concat
                     ''')' ;
 
-                insert into qtemp.xxtempsrc (srcdta) values(ifnull(stmt, '???')); 
+                insert into xxtempsrc (srcdta) values(ifnull(stmt, '???')); 
 
 
                 -- Human readable version of the paramter name
@@ -265,7 +273,7 @@ begin
                     'PROMPT(''' concat parm_text concat ''') ' concat
                     'PASSATR(*YES) ' concat 
                     'CHOICE(''' concat choice_text concat ''') ';
-                insert into qtemp.xxtempsrc (srcdta) values(ifnull(stmt, '???')); 
+                insert into xxtempsrc (srcdta) values(ifnull(stmt, '???')); 
                 
          end for;            
         end; 
@@ -278,13 +286,37 @@ begin
             ' of type ' concat rtrim(create_CL_command.routine_type) concat ' does not exists'; 
         signal  sqlstate 'NLI02' set message_text  = msg;
     else
-        call joblog(allow_mode);
-        call qcmdexc ( 'crtcmd CMD(' concat 
-            rtrim(library_name) concat '/' concat 
-            rtrim(command_name) concat ')' concat 
-           ' PGM(CMD4SQL/CMD4SQL) MODE(*ALL) ALLOW(' concat allow_mode concat 
-           ') SRCFILE(qtemp/xxtempsrc) REPLACE(*yes) SRCMBR(xxtempsrc) text(''' concat 
-           title concat ''')');
+        begin 
+            declare continue handler for sqlstate '38501' begin
+                for 
+                    with a as ( 
+                       Select 
+                           int(substr(evfevent , 20 ,6)) lineno,
+                           cast (rtrim(substr(evfevent ,  68 , 2 )) as varchar(30)) error_msg_text ,
+                           evfevent all_text 
+                       from CMD4SQL.evfevent 
+                       where evfevent like 'ERROR%'
+                    ) 
+                    select *  
+                    from a
+                    left join qcmdsrc  b
+                        on  rrn(b) = lineno 
+                do
+                
+                    set msg = error_msg_text || '+' || srcdta; 
+                    signal  sqlstate 'NLI02' set message_text  = msg;
+                end for;
+            end;
+
+            set cmd =  'crtcmd CMD(' concat 
+                rtrim(library_name) concat '/' concat 
+                rtrim(command_name) concat ')' concat 
+               ' PGM(CMD4SQL/CMD4SQL) MODE(*ALL) ALLOW(' concat allow_mode concat 
+               ') SRCFILE(cmd4sql/xxtempsrc) OPTION(*EVENTF) REPLACE(*yes)  text(''' concat 
+               title concat ''')';
+               
+             call qcmdexc ( cmd);   
+        end; 
     end if;                                  
             
 end;
@@ -299,11 +331,26 @@ call cmd4sql.create_CL_command (
 );
 
 
--- Generated source:
--- select * from qtemp.xxtempsrc;
+with a as ( 
+   Select 
+       int(substr(evfevent , 20 ,6)) lineno,
+       substr(evfevent , 66 ) msg
+   from cmd4sql.evfevent 
+   where evfevent like 'ERROR%'
+) 
+select * 
+from a
+left join cmd4sql.XXTEMPSRC b
+on  rrn(b) = lineno; 
+
+Select * from cmd4sql.evfevent;
+
 
 -- Generated source:
--- select * from qtemp.xxtempsrc;
+-- select * from cmd4sql.xxtempsrc;
+
+-- Generated source:
+-- select * from cmd4sql.xxtempsrc;
 -- cl: CMD4SQL/EXCHRATE;
 
 --select row_number() over() id, a.* from sysparms a;
