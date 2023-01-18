@@ -5,6 +5,7 @@
     in routine_name varchar(32) ,
     in routine_schema char(10)
 )
+dynamic result sets 1
 specific CRTCMDSQL
 set option output=*print, commit=*none, dbgview = *source 
 begin
@@ -23,6 +24,8 @@ begin
     declare out_parm_counter   int default 0;
     declare dummy              int;
     declare out_type           int; 
+    -- declare report  cursor with return for values 'Completed';
+        
 
     -- Allow any parameters in lowercase: 
     set create_CL_command.command_name    = upper(create_CL_command.command_name)  ;
@@ -59,7 +62,7 @@ begin
         call qcmdexc ( 'ovrdbf  XXTEMPSRC tofile(cmd4sql/XXTEMPSRC) MBR(' || rtrim(command_name) || ') ovrscope(*JOB)');
         
         delete from xxtempsrc;
-        insert into xxtempsrc (srcdta) values('CMD PROMPT(''' concat title concat ''')'); 
+        insert into xxtempsrc (srcdta) values('CMD PROMPT(''' concat trim(title) concat ''')'); 
 
         -- This is the function or procedure to call, placed 
         -- as a constant in the command and always pased as first parameter
@@ -150,7 +153,8 @@ begin
 
 
                 -- Name from the comment, given i n parentheses: 
-                set keyword_name = parameter_name;
+                set keyword_name = null;
+
                 if c.long_comment is not null then 
                     set parm_name_by_comment =  regexp_substr (c.long_comment , '\((.*)\)' , 1, 1, 'i' , 1 ); 
                     if  parm_name_by_comment is not null then
@@ -169,7 +173,7 @@ begin
                         
                                                  
                 if cl_parm_type = '????' then 
-                    set msg = 'Datatype ' concat sql_parm_type concat 'is not supported';
+                    set msg = ': Datatype ' concat sql_parm_type concat 'is not supported';
                     signal  sqlstate 'NLI02' set message_text  = msg;
                 end if; 
 
@@ -227,7 +231,11 @@ begin
                 end if;
                 
                 if keyword_name is null then 
-                    set keyword_name = parameter_name;
+                    set keyword_name = replace(parameter_name , '_' , '');
+                end if;
+                
+                if parameter_name is null then 
+                    set parameter_name = 'JOHN';
                 end if;
                 
                 -- First: Put the parameter name as meta info
@@ -253,7 +261,10 @@ begin
 
                 -- Human readable version of the paramter name
                 if long_comment is not null then
-                    set parm_text = rtrim(regexp_substr (long_comment , '(.*)\(' , 1, 1, 'i' , 1 ));
+                    set parm_text = substr(rtrim(regexp_substr (long_comment , '(.*)\(' , 1, 1, 'i' , 1 )), 1, 30);
+                    if parm_text is null then 
+                        set parm_text = substr(trim(long_comment), 1, 30);
+                    end if ;   
                 else                 
                     set parm_text = Upper(substr(parameter_name, 1 , 1)) concat lower(substr(parameter_name , 2));
                     set parm_text = replace (parm_text , '_' , ' ');
@@ -270,7 +281,7 @@ begin
                 -- Last: Put the parameter 
                 set stmt = 'PARM KWD(' concat rtrim(substr(keyword_name, 1 , 10)) concat ') '  concat
                     parm_declarartion  concat
-                    'PROMPT(''' concat parm_text concat ''') ' concat
+                    'PROMPT(''' concat trim(parm_text) concat ''') ' concat
                     'PASSATR(*YES) ' concat 
                     'CHOICE(''' concat choice_text concat ''') ';
                 insert into xxtempsrc (srcdta) values(ifnull(stmt, '???')); 
@@ -281,13 +292,22 @@ begin
     
     if  title is null then
         set msg = 
-            'Routine ' concat rtrim(create_CL_command.routine_name) concat 
+            ': Routine ' concat rtrim(create_CL_command.routine_name) concat 
             ' In schema ' concat rtrim(create_CL_command.routine_schema) concat 
             ' of type ' concat rtrim(create_CL_command.routine_type) concat ' does not exists'; 
         signal  sqlstate 'NLI02' set message_text  = msg;
     else
         begin 
             declare continue handler for sqlstate '38501' begin
+                set msg = 
+                    ': Command for  ' concat rtrim(create_CL_command.routine_name) concat 
+                    ' In schema ' concat rtrim(create_CL_command.routine_schema) concat 
+                    ' of type ' concat rtrim(create_CL_command.routine_type) concat ' failed. Look in spoolfiles'; 
+                signal  sqlstate 'NLI03' set message_text  = msg;
+            end;
+            
+
+            /* for now - we are happy with the compile list if it fails ....
                 for 
                     with a as ( 
                        Select 
@@ -307,6 +327,7 @@ begin
                     signal  sqlstate 'NLI02' set message_text  = msg;
                 end for;
             end;
+            */ 
 
             set cmd =  'crtcmd CMD(' concat 
                 rtrim(library_name) concat '/' concat 
@@ -317,7 +338,9 @@ begin
                
              call qcmdexc ( cmd);   
         end; 
-    end if;                                  
+    end if;  
+    
+    -- open report;                                
             
 end;
 
@@ -328,6 +351,14 @@ call cmd4sql.create_CL_command (
     routine_type => 'FUNCTION',
     routine_name => 'EXCHANGE_RATE',
     routine_schema => 'CMD4SQL'
+);
+
+call cmd4sql.create_CL_command ( 
+    command_name => 'ADDLOG',
+    library_name => 'NHO',
+    routine_type => 'PROCEDURE',
+    routine_name => 'ADD_LOG',
+    routine_schema => 'YXDB'
 );
 
 
