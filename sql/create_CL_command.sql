@@ -186,6 +186,10 @@ begin
                     set numeric_scale = 9;
                 end if;
 
+                if character_maximum_length > 5000 then
+                    set character_maximum_length = 5000;
+                end if;
+                 
                 set numeric_scale = ifnull(numeric_scale , 0);
 
                 if substr( cl_parm_type , 1, 3) = 'INT'  
@@ -233,11 +237,7 @@ begin
                 if keyword_name is null then 
                     set keyword_name = replace(parameter_name , '_' , '');
                 end if;
-                
-                if parameter_name is null then 
-                    set parameter_name = 'JOHN';
-                end if;
-                
+                                
                 -- First: Put the parameter name as meta info
                 set stmt = 'PARM KWD(NAME' concat row_no concat ') '  concat required concat
                     ' TYPE(*CHAR) LEN(30) CONSTANT(''' concat
@@ -385,3 +385,5 @@ Select * from cmd4sql.evfevent;
 -- cl: CMD4SQL/EXCHRATE;
 
 --select row_number() over() id, a.* from sysparms a;
+
+
